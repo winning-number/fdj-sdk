@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## v1.1.0
+## v1.2.0
 
 - add Reset method
 - implement mock

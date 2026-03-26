@@ -7,18 +7,22 @@ import (
 
 	"github.com/gofast-pkg/csv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/winning-number/fdj-sdk-lotto/draw/testdata"
 )
 
 func loadCSV[T any](t *testing.T, filepath string, data *[]T) {
+	t.Helper()
+
 	var err error
 	var file *os.File
 	var csvReader csv.CSV
 
+	//nolint:gosec // This function is used to load a file from the local file system in tests context.
 	if file, err = os.Open(filepath); err != nil {
 		t.Fatal(err)
 	}
-	defer file.Close()
+	defer func() { require.NoError(t, file.Close()) }()
 
 	if csvReader, err = csv.New(file, ';'); err != nil {
 		t.Fatal(err)
@@ -57,18 +61,19 @@ func TestCSV0_Convert(t *testing.T) {
 		loadCSV(t, testdata.FileSuperLotoV0, &data)
 		expected := DataSetSuperLottoV0()
 
-		data[0].Date = "invalid date"
+		data[0].Date = invalidDate
 		for i, csv := range data {
 			draw, err := Convert(csv, SuperLottoType)
 			if i == 0 && assert.Error(t, err) {
-				assert.ErrorIs(t, err, ErrCSVDate)
+				require.ErrorIs(t, err, ErrCSVDate)
 				assert.Empty(t, draw)
-			} else {
-				if assert.NoError(t, err) {
-					assert.Equal(t, expected[i], draw)
-				}
+
+				continue
 			}
 
+			if assert.NoError(t, err) {
+				assert.Equal(t, expected[i], draw)
+			}
 		}
 	})
 	t.Run("Should return an error on the first draw because winStat has failed", func(t *testing.T) {
@@ -76,18 +81,19 @@ func TestCSV0_Convert(t *testing.T) {
 		loadCSV(t, testdata.FileSuperLotoV0, &data)
 		expected := DataSetSuperLottoV0()
 
-		data[0].GainR1 = "invalid GainR1"
+		data[0].GainR1 = invalidGain
 		for i, csv := range data {
 			draw, err := Convert(csv, SuperLottoType)
 			if i == 0 && assert.Error(t, err) {
-				assert.ErrorIs(t, err, ErrCSVPrice)
+				require.ErrorIs(t, err, ErrCSVPrice)
 				assert.Empty(t, draw)
-			} else {
-				if assert.NoError(t, err) {
-					assert.Equal(t, expected[i], draw)
-				}
+
+				continue
 			}
 
+			if assert.NoError(t, err) {
+				assert.Equal(t, expected[i], draw)
+			}
 		}
 	})
 }

@@ -7,14 +7,13 @@
 [![Release](https://img.shields.io/github/release/winning-number/fdj-sdk-lotto.svg?style=flat-square)](https://github.com/winning-number/fdj-sdk-lotto/releases)
 [![Go Reference](https://pkg.go.dev/badge/github.com/winning-number/fdj-sdk-lotto.svg)](https://pkg.go.dev/github.com/winning-number/fdj-sdk-lotto)
 [![Go Report Card](https://goreportcard.com/badge/github.com/winning-number/fdj-sdk-lotto)](https://goreportcard.com/report/github.com/winning-number/fdj-sdk-lotto)
-[![codebeat badge](https://codebeat.co/badges/6d11dead-fa65-4f84-b72d-e1218694a0ec)](https://codebeat.co/projects/github-com-winning-number-fdj-sdk-lotto-main)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwinning-number%2Ffdj-sdk-lotto.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwinning-number%2Ffdj-sdk-lotto?ref=badge_shield)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://raw.githubusercontent.com/winning-number/fdj-sdk-lotto/main/LICENSE.md)
 
 <!-- Description section -->
 This package is a sdk of the lotto (FRANCAISE DES JEUX) and could get the full draws history. It get the draws history provided from [any csv files](https://www.fdj.fr/jeux-de-tirage/loto/historique) and convert them in a standardized Draw format.
 
-The project was promute to the new v1.0.0 release with a lot of break in change. This change follow my needs about a personnal project to process the lotto history.
+This project will undergo a refactoring in the coming months, which will cause significant break-in changes. The goal is to be able to add all types of FDJ games. It's not an urgent matter at the time of this commit, but keep it in mind.
 
 ## Installation
 
@@ -50,7 +49,8 @@ func main() {
         panic(err)
     }
     // get all by default
-    if err = driver.LoadAPI(context.Background(), lotto.SourceAll()); err != nil {
+    sources := SourceInfoAll(APIVersion3)
+    if err = driver.LoadSource(context.Background(), sources); err != nil {
         panic(err)
     }
     draws := driver.Draws(lotto.Filter{
@@ -59,7 +59,7 @@ func main() {
         XmasLotto:    true
         ClassicLotto: true
         OldLotto:     true
-    })
+    }, draw.OrderNone)
 }
 ```
 

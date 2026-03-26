@@ -7,18 +7,17 @@ import "strings"
 // this version introduce the win code and extend the win rate to 9 ranks.
 // So, CSV2 is embedded.
 type CSV3 struct {
-	WinCodes string `csv:"codes_gagnants"`
-	GainCode string `csv:"rapport_codes_gagnants"`
-	GainR7   string `csv:"rapport_du_rang7"`
-	GainR8   string `csv:"rapport_du_rang8"`
-	GainR9   string `csv:"rapport_du_rang9"`
-
 	CSV2
 
-	NumberWinCodes int32 `csv:"nombre_de_codes_gagnants"`
-	WinnerR7       int32 `csv:"nombre_de_gagnant_au_rang7"`
-	WinnerR8       int32 `csv:"nombre_de_gagnant_au_rang8"`
-	WinnerR9       int32 `csv:"nombre_de_gagnant_au_rang9"`
+	WinCodes       string `csv:"codes_gagnants"`
+	GainCode       string `csv:"rapport_codes_gagnants"`
+	GainR7         string `csv:"rapport_du_rang7"`
+	GainR8         string `csv:"rapport_du_rang8"`
+	GainR9         string `csv:"rapport_du_rang9"`
+	NumberWinCodes int32  `csv:"nombre_de_codes_gagnants"`
+	WinnerR7       int32  `csv:"nombre_de_gagnant_au_rang7"`
+	WinnerR8       int32  `csv:"nombre_de_gagnant_au_rang8"`
+	WinnerR9       int32  `csv:"nombre_de_gagnant_au_rang9"`
 }
 
 func (c CSV3) winCode() (WinCode, error) {

@@ -9,9 +9,14 @@ COVERAGE_FILE=coverage.txt
 TESTREPORT_FILE=test_report.txt
 BENCHREPORT_FILE=bench_report.txt
 GODOC_PROCESS=godoc_process.txt
-LINTER_VERSION=v1.53.3
-MOCKERY_VERSION=v2.30.1
+LINTER_VERSION=v2.11.4
+MOCKERY_VERSION=v3.7.0
 MODULE_NAME := $(shell go list -m)
+# CODESYSTEM UPDATER
+CODESYSTEM=lib-codesystem.zip
+CODESYSTEM_CHECKER=codesystem-checker.zip
+CODESYSTEM_VERIFIED_FILES=verified_files
+CODESYSTEM_CHECKER_SH=cs-checker.sh
 
 # Global colors for output
 BLUE=\033[0;34m
@@ -47,27 +52,26 @@ all: ci-tool dep lint tests build
 ## - golangci-lint
 .PHONY: ci-tool
 ci-tool:
-# add +"x" in the if statement because if command is not installed VERSION should empty and will cause a syntax error
-	@VERSION=$(shell golangci-lint version 2>/dev/null | sed -rn "s/.* (v[0-9]+.[0-9]+.[0-9]+) .*$$/\1/p"); \
-	if [ $$VERSION+"x" != ${LINTER_VERSION}+"x" ]; then \
-		echo "golangci-lint installation (${LINTER_VERSION})"; \
-		go install github.com/golangci/golangci-lint/cmd/golangci-lint@${LINTER_VERSION}; \
+	@VERSION=$$(golangci-lint version --short 2>/dev/null); \
+	if [ "v$$VERSION" != ${LINTER_VERSION} ]; then \
+		curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $$(go env GOPATH)/bin ${LINTER_VERSION}; \
 		golangci-lint version; \
+	else \
+		echo "golangci-lint already installed (current: v$$VERSION, expected: ${LINTER_VERSION})"; \
 	fi
 
 ## Install tool needs for the development project after calling the ci-tool rule
 ## - mockery
-## - swaggo
 ## - golang.org/x/tools dependencies
 .PHONY: tool
 tool: ci-tool
-	@echo "golang.org/x/tools update ..."
-	go install golang.org/x/tools/...@latest
-	@VERSION=$(shell mockery --version --quiet 2>/dev/null | sed -rn "s/.*(v[0-9]+.[0-9]+.[0-9]+)$$/\1/p"); \
-	if [ $$VERSION+"x" != ${MOCKERY_VERSION}+"x" ]; then \
-		echo "mockery installation (${MOCKERY_VERSION})"; \
-		go install github.com/vektra/mockery/v2/...@${MOCKERY_VERSION}; \
-		mockery --version --quiet; \
+	@go install golang.org/x/tools/...@latest
+	@VERSION=$$(mockery version 2>/dev/null); \
+	if [ $$VERSION != ${MOCKERY_VERSION} ]; then \
+		go install github.com/vektra/mockery/v3@${MOCKERY_VERSION}; \
+		mockery version; \
+	else \
+		echo "mockery already installed (current: $$VERSION, expected: ${MOCKERY_VERSION})"; \
 	fi
 
 ## Install dependencies
@@ -79,7 +83,7 @@ dep:
 ## call ci-tool
 .PHONY: lint
 lint: ci-tool
-	golangci-lint run --skip-dirs mocks --skip-files "(^.+)mock_test.go"
+	golangci-lint run
 
 ## Run the tests suite
 ## call [utest, bench]
@@ -121,6 +125,7 @@ build:
 .PHONY: update
 update:
 	GOMODLOCATION=$$PWD go generate ./...
+	mockery
 
 ## Run a Go documentation server
 .PHONY: godoc
@@ -133,6 +138,20 @@ godoc: --create-tmp-folders
 
 ## -- Other commands --
 
+## Codesystem update
+.PHONY: codesystem
+codesystem:
+	@curl -LO https://github.com/gofast-pkg/codesystem/releases/latest/download/${CODESYSTEM} && \
+	unzip -q ${CODESYSTEM}
+
+## Codesystem verify
+.PHONY: codesystem-check
+codesystem-check:
+	@curl -LO https://github.com/gofast-pkg/codesystem/releases/latest/download/${CODESYSTEM_CHECKER} && \
+	unzip -q ${CODESYSTEM_CHECKER}
+	chmod +x ${CODESYSTEM_CHECKER_SH}
+	@./${CODESYSTEM_CHECKER_SH} lib .
+
 ## Cleanup the temporary resources
 .PHONY: clean
 clean:
@@ -141,6 +160,10 @@ clean:
 	fi
 	rm -rf ${IGNORED_FOLDER}
 	rm -rf ${VENDOR_FOLDER}
+	rm -f ${CODESYSTEM}
+	rm -f ${CODESYSTEM_CHECKER}
+	rm -rf ${CODESYSTEM_VERIFIED_FILES}
+	rm -f ${CODESYSTEM_CHECKER_SH}
 
 ## Reset the project to the initial state
 ## call [clean]

@@ -5,11 +5,10 @@ package draw
 // The only difference is the addition of the joker and the tirage order.
 // So, CSV0 is embedded.
 type CSV1 struct {
-	Joker string `csv:"numero_joker"`
-
 	CSV0
 
-	Tirage int32 `csv:"1er_ou_2eme_tirage"`
+	Joker  string `csv:"numero_joker"`
+	Tirage int32  `csv:"1er_ou_2eme_tirage"`
 }
 
 func (c CSV1) joker() Joker {

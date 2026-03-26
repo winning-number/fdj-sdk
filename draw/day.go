@@ -1,19 +1,19 @@
 package draw
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (
-	csvDayMonday         = "LUNDI   "
-	csvDayTuesday        = "MARDI   "
+	csvDayMonday         = "LUNDI"
+	csvDayTuesday        = "MARDI"
 	csvDayWednesday      = "MERCREDI"
-	csvDayThursday       = "JEUDI   "
+	csvDayThursday       = "JEUDI"
 	csvDayFriday         = "VENDREDI"
-	csvDaySaturday       = "SAMEDI  "
+	csvDaySaturday       = "SAMEDI"
 	csvDaySunday         = "DIMANCHE"
 	csvDayShortMonday    = "LU"
 	csvDayShortTuesday   = "MA"
@@ -24,7 +24,7 @@ const (
 	csvDayShortSunday    = "DI"
 )
 
-// Day list
+// Day list.
 const (
 	DayMonday    Day = "MONDAY"
 	DayTuesday   Day = "TUESDAY"
@@ -35,6 +35,7 @@ const (
 	DaySunday    Day = "SUNDAY"
 )
 
+// Day is a type to represent the day of a draw.
 type Day string
 
 // dateConverter detect the date format and convert it to a date type [time.Time].
@@ -50,7 +51,7 @@ func dateConverter(date string) (time.Time, error) {
 		format = "02/01/2006"
 	}
 	if t, err = time.Parse(format, date); err != nil {
-		return time.Time{}, errors.Wrap(ErrCSVDate, err.Error())
+		return time.Time{}, errors.Join(ErrCSVDate, err)
 	}
 
 	return t, nil
@@ -59,7 +60,8 @@ func dateConverter(date string) (time.Time, error) {
 // dayConverter detect the day format from a csv and convert it to a [Day] type.
 // If the day is unknown a [ErrDayUnknown] is return.
 func dayConverter(day string) (Day, error) {
-	switch day {
+	normalizedDay := strings.TrimSpace(day)
+	switch normalizedDay {
 	case csvDayMonday, csvDayShortMonday:
 		return DayMonday, nil
 	case csvDayTuesday, csvDayShortTuesday:
@@ -75,6 +77,6 @@ func dayConverter(day string) (Day, error) {
 	case csvDaySunday, csvDayShortSunday:
 		return DaySunday, nil
 	default:
-		return "", ErrCSVDay
+		return "", fmt.Errorf("unknown day %s: %w", day, ErrCSVDay)
 	}
 }

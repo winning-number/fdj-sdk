@@ -1,5 +1,0 @@
-inpackage: False
-testonly: False
-with-expecter: True
-keeptree: True
-exported: True

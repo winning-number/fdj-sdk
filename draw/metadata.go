@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Metadata is the metadata of a draw
+// Metadata is the metadata of a draw.
 type Metadata struct {
 	Date           time.Time
 	ForclosureDate time.Time

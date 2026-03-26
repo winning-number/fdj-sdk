@@ -1,6 +1,6 @@
 package draw
 
-// Type lists the different types of draw available
+// Type lists the different types of draw available.
 const (
 	SuperLottoType Type = "super-lotto"
 	GrandLottoType Type = "grand-lotto"
@@ -8,5 +8,5 @@ const (
 	LottoType      Type = "new-lotto"
 )
 
-// Type is the type of draw
+// Type is the type of draw.
 type Type string

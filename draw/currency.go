@@ -15,12 +15,13 @@ const (
 	csvCurrencyFRF = "frf"
 )
 
-// Currency list
+// Currency list.
 const (
 	CurrencyEur Currency = "EUR"
 	CurrencyFR  Currency = "FRF"
 )
 
+// Currency is a type to represent the currency of a draw's gain.
 type Currency string
 
 // currencyConverter convert a currency [string] from a csv data to a [Currency].

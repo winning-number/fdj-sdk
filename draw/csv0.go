@@ -4,7 +4,9 @@ package draw
 // It is the oldest version of the CSV file.
 type CSV0 struct {
 	coreCSV
-	JokerPlus      string `csv:"numero_jokerplus"`
+
+	JokerPlus string `csv:"numero_jokerplus"`
+	//nolint:misspell // This field is named like this in the CSV file.
 	WinOrder       string `csv:"combinaison_gagnante_en_ordre_croissant"`
 	GainR1         string `csv:"rapport_du_rang1"`
 	GainR2         string `csv:"rapport_du_rang2"`
@@ -29,7 +31,9 @@ type CSV0 struct {
 	WinnerR7       int32  `csv:"nombre_de_gagnant_au_rang7"`
 }
 
-// no winCode in this version
+// no winCode in this version.
+//
+//nolint:unparam // This winCode method satisfies the DrawConverter interface.
 func (c CSV0) winCode() (WinCode, error) {
 	return WinCode{
 		Number: 0,
@@ -74,11 +78,11 @@ func (c CSV0) joker() Joker {
 	}
 }
 
-// roll returns the roll of the draw
-// in this version, the additional ball is a value between 1 and 49
-// so the additional ball is added into the first roll
-// the lucky ball is not present in this version
-// so the second roll is not present in this version
+// roll returns the roll of the draw.
+// in this version, the additional ball is a value between 1 and 49.
+// so the additional ball is added into the first roll.
+// the lucky ball is not present in this version.
+// so the second roll is not present in this version.
 func (c CSV0) roll() Roll {
 	return Roll{
 		First:     []int32{c.B1, c.B2, c.B3, c.B4, c.B5, c.B6, c.AdditionalBall},

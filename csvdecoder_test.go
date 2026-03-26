@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofast-pkg/csv"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/winning-number/fdj-sdk-lotto/draw"
 )
 
@@ -12,7 +13,7 @@ import (
 // Private function tested for robustness.
 func TestNewInstanceFunc(t *testing.T) {
 	t.Run("Should be ok", func(t *testing.T) {
-		var instance draw.DrawConverter
+		var instance draw.Converter
 
 		instance = newInstanceFunc(draw.V0)
 		if assert.NotNil(t, instance) {
@@ -58,11 +59,11 @@ func TestSaveInstanceFunc(t *testing.T) {
 		d, err = saveInstanceFunc(&draw.CSV0{}, dec)
 		if assert.Error(t, err) {
 			assert.Equal(t, draw.Draw{}, d)
-			assert.ErrorIs(t, err, ErrDrawTypeKeyNotFound)
+			require.ErrorIs(t, err, ErrDrawTypeKeyNotFound)
 		}
 	})
 	t.Run(
-		"Should return an error because the instance doesn't support the DrawConverter type",
+		"Should return an error because the instance doesn't support the Converter type",
 		func(t *testing.T) {
 			var d draw.Draw
 
@@ -70,7 +71,7 @@ func TestSaveInstanceFunc(t *testing.T) {
 			d, err = saveInstanceFunc(&Filter{}, dec)
 			if assert.Error(t, err) {
 				assert.Equal(t, draw.Draw{}, d)
-				assert.ErrorIs(t, err, ErrInvalidDrawType)
+				require.ErrorIs(t, err, ErrInvalidDrawType)
 			}
 		})
 	t.Run("Should return an error because converter has failed", func(t *testing.T) {
@@ -80,7 +81,7 @@ func TestSaveInstanceFunc(t *testing.T) {
 		d, err = saveInstanceFunc(&draw.CSV1{}, dec)
 		if assert.Error(t, err) {
 			assert.Equal(t, draw.Draw{}, d)
-			assert.ErrorIs(t, err, draw.ErrCSVDate)
+			require.ErrorIs(t, err, draw.ErrCSVDate)
 		}
 	})
 }
