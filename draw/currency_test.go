@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCurrencyConverter(t *testing.T) {
@@ -70,7 +71,7 @@ func TestPriceConverter(t *testing.T) {
 
 		result, err = priceConverter(price)
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrEmptyMoney)
+			require.ErrorIs(t, err, ErrEmptyMoney)
 			assert.Equal(t, expected, result)
 		}
 	})
@@ -83,7 +84,7 @@ func TestPriceConverter(t *testing.T) {
 
 		result, err = priceConverter(price)
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrCSVPrice)
+			require.ErrorIs(t, err, ErrCSVPrice)
 			assert.Equal(t, expected, result)
 		}
 	})

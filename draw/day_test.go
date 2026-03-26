@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDateConverter(t *testing.T) {
@@ -30,7 +31,7 @@ func TestDateConverter(t *testing.T) {
 
 		result, err := dateConverter(date)
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrCSVDate)
+			require.ErrorIs(t, err, ErrCSVDate)
 			assert.Empty(t, result)
 		}
 	})
@@ -161,7 +162,7 @@ func TestDayConverter(t *testing.T) {
 
 		result, err := dayConverter(day)
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrCSVDay)
+			require.ErrorIs(t, err, ErrCSVDay)
 			assert.Empty(t, result)
 		}
 	})

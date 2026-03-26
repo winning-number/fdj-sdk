@@ -29,7 +29,6 @@ func TestOrderDraws(t *testing.T) {
 		draws := messyDraws()
 		OrderDraws(&draws, OrderASC)
 		assert.Equal(t, expectedDraw, draws)
-
 	})
 	t.Run("Should be ok to order draws by DESC order", func(t *testing.T) {
 		expectedDraw := []Draw{
@@ -53,12 +52,12 @@ func TestOrderDraws(t *testing.T) {
 	})
 }
 
-func TestDrawFinder(t *testing.T) {
+func TestFinder(t *testing.T) {
 	t.Run("Should be ok to find draw", func(t *testing.T) {
 		expectedDraw := DataSetClassicLottoV1()[0]
 
 		draws := messyDraws()
-		ok := DrawFinder(&draws, expectedDraw)
+		ok := Finder(&draws, expectedDraw)
 		assert.True(t, ok)
 	})
 	t.Run("Should not find the draw", func(t *testing.T) {
@@ -66,7 +65,7 @@ func TestDrawFinder(t *testing.T) {
 
 		expectedDraw.Metadata.ID = "different ID"
 		draws := messyDraws()
-		ok := DrawFinder(&draws, expectedDraw)
+		ok := Finder(&draws, expectedDraw)
 		assert.False(t, ok)
 	})
 }

@@ -11,4 +11,5 @@ const (
 	V4 Version = "v4"
 )
 
+// Version is the version of the draw to parse in adequation with the draw type.
 type Version string

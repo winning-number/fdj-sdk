@@ -1,6 +1,6 @@
 package draw
 
-// WinsStats is the win stats of a draw for each rank.
+// WinStats is the win stats of a draw for each rank.
 type WinStats struct {
 	// WinRateSecondRoll present amount money win by each winner for the second roll.
 	// Index 0 is the Rank1.

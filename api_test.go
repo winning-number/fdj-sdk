@@ -3,7 +3,6 @@ package lotto
 import (
 	"archive/zip"
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,6 +12,7 @@ import (
 	xcsv "github.com/gofast-pkg/csv"
 	"github.com/gofast-pkg/http/testify"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/winning-number/fdj-sdk-lotto/draw"
 )
 
@@ -33,12 +33,12 @@ func TestAPI_LoadSource(t *testing.T) {
 		a := NewAPI()
 		err = a.LoadSource(context.Background(), []SourceInfo{})
 		if assert.NoError(t, err) {
-			assert.Len(t, a.(*api).draws, 0)
+			assert.Empty(t, a.(*api).draws)
 		}
 
 		err = a.LoadSource(context.Background(), nil)
 		if assert.NoError(t, err) {
-			assert.Len(t, a.(*api).draws, 0)
+			assert.Empty(t, a.(*api).draws)
 		}
 	})
 	t.Run("Should return an error because context is nil", func(t *testing.T) {
@@ -47,27 +47,25 @@ func TestAPI_LoadSource(t *testing.T) {
 		err := a.LoadSource(nil, []SourceInfo{})
 
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrNoContext)
+			require.ErrorIs(t, err, ErrNoContext)
 		}
 	})
 	t.Run("Should return an error because new request has failed", func(t *testing.T) {
 		var err error
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.LoadSource(ctx, []SourceInfo{{Name: 9999, APIZipName: "%"}})
+		err = a.LoadSource(ctx, []SourceInfo{{APIBase: APIBasePath, Name: 9999, APIPath: "%"}})
 
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrInvalidHTTPRequest)
+			require.ErrorIs(t, err, ErrInvalidHTTPRequest)
 		}
 	})
 	t.Run("Should return an error because httpclient.Do() has failed", func(t *testing.T) {
 		var req *http.Request
 		var err error
-		var expectedErr error
 
 		// setup http client tester
 		func() {
-			expectedErr = errors.New("client do has failed")
 			url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 			if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
 				t.Error(err)
@@ -75,16 +73,16 @@ func TestAPI_LoadSource(t *testing.T) {
 
 			httpTester.AddCall(testify.Caller{
 				ExpectedRequest: req,
-				Err:             expectedErr,
+				Err:             ErrHTTPClientDo,
 			})
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.LoadSource(ctx, []SourceInfo{{Name: 9999, APIZipName: "test"}})
+		err = a.LoadSource(ctx, []SourceInfo{{APIBase: APIBasePath, Name: 9999, APIPath: "test"}})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, expectedErr)
+			require.ErrorIs(t, err, ErrHTTPClientDo)
 		}
 	})
 	t.Run("Should return an error because client return a bad status code", func(t *testing.T) {
@@ -105,11 +103,11 @@ func TestAPI_LoadSource(t *testing.T) {
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.LoadSource(ctx, []SourceInfo{{Name: 9999, APIZipName: "test"}})
+		err = a.LoadSource(ctx, []SourceInfo{{APIBase: APIBasePath, Name: 9999, APIPath: "test"}})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, ErrInvalidResponseHTTP)
+			require.ErrorIs(t, err, ErrInvalidResponseHTTP)
 		}
 	})
 	t.Run("Should return an error because zip new reader has failed", func(t *testing.T) {
@@ -130,11 +128,11 @@ func TestAPI_LoadSource(t *testing.T) {
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.LoadSource(ctx, []SourceInfo{{Name: 9999, APIZipName: "test"}})
+		err = a.LoadSource(ctx, []SourceInfo{{APIBase: APIBasePath, Name: 9999, APIPath: "test"}})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, zip.ErrFormat)
+			require.ErrorIs(t, err, zip.ErrFormat)
 		}
 	})
 	t.Run("Should return an error because zip file is empty", func(t *testing.T) {
@@ -148,7 +146,7 @@ func TestAPI_LoadSource(t *testing.T) {
 				t.Error(err)
 			}
 			// do not close file because the request reader should will do it
-			//defer f.Close()
+			// defer f.Close()
 
 			url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 			if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
@@ -163,10 +161,11 @@ func TestAPI_LoadSource(t *testing.T) {
 
 		a := &api{httpClient: httpTester.Client()}
 		err = a.LoadSource(ctx, []SourceInfo{{
-			Name:       9999,
-			APIZipName: "test",
-			Version:    draw.V1,
-			Type:       draw.LottoType,
+			APIBase: APIBasePath,
+			Name:    9999,
+			APIPath: "test",
+			Version: draw.V1,
+			Type:    draw.LottoType,
 		}})
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
@@ -186,7 +185,7 @@ func TestAPI_LoadSource(t *testing.T) {
 					t.Error(err)
 				}
 				// do not close file because the request reader should will do it
-				//defer f.Close()
+				// defer f.Close()
 
 				url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 				if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
@@ -202,15 +201,16 @@ func TestAPI_LoadSource(t *testing.T) {
 			a := &api{httpClient: httpTester.Client()}
 			// use the v2 draw version to have a complex object compare to the csv content
 			err = a.LoadSource(ctx, []SourceInfo{{
-				Name:       9999,
-				APIZipName: "test",
-				Version:    draw.V2,
-				Type:       draw.LottoType,
+				APIBase: APIBasePath,
+				Name:    9999,
+				APIPath: "test",
+				Version: draw.V2,
+				Type:    draw.LottoType,
 			}})
 
 			if assert.Error(t, err) {
 				httpTester.ExpectedCalls()
-				assert.ErrorIs(t, err, xcsv.ErrOBJDecode)
+				require.ErrorIs(t, err, xcsv.ErrOBJDecode)
 			}
 		})
 	t.Run(
@@ -226,7 +226,7 @@ func TestAPI_LoadSource(t *testing.T) {
 					t.Error(err)
 				}
 				// do not close file because the request reader should will do it
-				//defer f.Close()
+				// defer f.Close()
 
 				url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 				if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
@@ -242,15 +242,16 @@ func TestAPI_LoadSource(t *testing.T) {
 			a := &api{httpClient: httpTester.Client()}
 			// use the v0 draw version to an incomplete object compare to the csv content
 			err = a.LoadSource(ctx, []SourceInfo{{
-				Name:       9999,
-				APIZipName: "test",
-				Version:    draw.V0,
-				Type:       draw.LottoType,
+				APIBase: APIBasePath,
+				Name:    9999,
+				APIPath: "test",
+				Version: draw.V0,
+				Type:    draw.LottoType,
 			}})
 
 			if assert.Error(t, err) {
 				httpTester.ExpectedCalls()
-				assert.ErrorIs(t, err, ErrInvalidCSVType)
+				require.ErrorIs(t, err, ErrInvalidCSVType)
 			}
 		})
 	t.Run("Should load the source", func(t *testing.T) {
@@ -264,7 +265,7 @@ func TestAPI_LoadSource(t *testing.T) {
 				t.Error(err)
 			}
 			// do not close file because the request reader should will do it
-			//defer f.Close()
+			// defer f.Close()
 
 			url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 			if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
@@ -279,10 +280,11 @@ func TestAPI_LoadSource(t *testing.T) {
 
 		a := &api{httpClient: httpTester.Client()}
 		err = a.LoadSource(ctx, []SourceInfo{{
-			Name:       9999,
-			APIZipName: "test",
-			Version:    draw.V1,
-			Type:       draw.LottoType,
+			APIBase: APIBasePath,
+			Name:    9999,
+			APIPath: "test",
+			Version: draw.V1,
+			Type:    draw.LottoType,
 		}})
 
 		if assert.NoError(t, err) {
@@ -300,7 +302,7 @@ func TestAPI_DownloadSource(t *testing.T) {
 		//nolint:staticcheck // ignore SA1012 because we want to test nil context
 		err := a.DownloadSource(nil, "/tmp", []SourceInfo{{}})
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrNoContext)
+			require.ErrorIs(t, err, ErrNoContext)
 		}
 	})
 	t.Run("Should nothing to do because source list is empty or nil", func(t *testing.T) {
@@ -309,33 +311,31 @@ func TestAPI_DownloadSource(t *testing.T) {
 		a := NewAPI()
 		err = a.DownloadSource(context.Background(), "./tmp", []SourceInfo{})
 		if assert.NoError(t, err) {
-			assert.Len(t, a.(*api).draws, 0)
+			assert.Empty(t, a.(*api).draws)
 		}
 
 		err = a.DownloadSource(context.Background(), "./tmp", nil)
 		if assert.NoError(t, err) {
-			assert.Len(t, a.(*api).draws, 0)
+			assert.Empty(t, a.(*api).draws)
 		}
 	})
 	t.Run("Should return an error because new request has failed", func(t *testing.T) {
 		var err error
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{Name: 9999, APIZipName: "%"}})
+		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{Name: 9999, APIPath: "%"}})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, ErrInvalidHTTPRequest)
+			require.ErrorIs(t, err, ErrInvalidHTTPRequest)
 		}
 	})
 	t.Run("Should return an error because httpclient.Do() has failed", func(t *testing.T) {
 		var req *http.Request
 		var err error
-		var expectedErr error
 
 		// setup http client tester
 		func() {
-			expectedErr = errors.New("client do has failed")
 			url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 			if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
 				t.Error(err)
@@ -343,16 +343,16 @@ func TestAPI_DownloadSource(t *testing.T) {
 
 			httpTester.AddCall(testify.Caller{
 				ExpectedRequest: req,
-				Err:             expectedErr,
+				Err:             ErrHTTPClientDo,
 			})
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{Name: 9999, APIZipName: "test"}})
+		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{APIBase: APIBasePath, Name: 9999, APIPath: "test"}})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, expectedErr)
+			require.ErrorIs(t, err, ErrHTTPClientDo)
 		}
 	})
 	t.Run("Should return an error because client return a bad status code", func(t *testing.T) {
@@ -373,11 +373,11 @@ func TestAPI_DownloadSource(t *testing.T) {
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{Name: 9999, APIZipName: "test"}})
+		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{APIBase: APIBasePath, Name: 9999, APIPath: "test"}})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, ErrInvalidResponseHTTP)
+			require.ErrorIs(t, err, ErrInvalidResponseHTTP)
 		}
 	})
 	t.Run("Should return an error because zip new reader has failed", func(t *testing.T) {
@@ -398,11 +398,11 @@ func TestAPI_DownloadSource(t *testing.T) {
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{Name: 9999, APIZipName: "test"}})
+		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{APIBase: APIBasePath, Name: 9999, APIPath: "test"}})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, zip.ErrFormat)
+			require.ErrorIs(t, err, zip.ErrFormat)
 		}
 	})
 	t.Run("Should return an error because path to create file do not exist", func(t *testing.T) {
@@ -416,7 +416,7 @@ func TestAPI_DownloadSource(t *testing.T) {
 				t.Error(err)
 			}
 			// do not close file because the request reader should will do it
-			//defer f.Close()
+			// defer f.Close()
 
 			url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 			if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
@@ -431,14 +431,15 @@ func TestAPI_DownloadSource(t *testing.T) {
 
 		a := &api{httpClient: httpTester.Client()}
 		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{
-			Name:       9999,
-			APIZipName: "test",
-			Version:    draw.V1,
-			Type:       draw.LottoType,
+			APIBase: APIBasePath,
+			Name:    9999,
+			APIPath: "test",
+			Version: draw.V1,
+			Type:    draw.LottoType,
 		}})
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, os.ErrNotExist)
+			require.ErrorIs(t, err, os.ErrNotExist)
 		}
 	})
 	t.Run("Should download the source", func(t *testing.T) {
@@ -446,10 +447,12 @@ func TestAPI_DownloadSource(t *testing.T) {
 		var err error
 		var f *os.File
 
-		if err = os.Mkdir("./tmp", 0755); err != nil {
+		if err = os.Mkdir("./tmp", 0750); err != nil {
 			t.Error(err)
 		}
-		defer os.RemoveAll("./tmp")
+		defer func() {
+			require.NoError(t, os.RemoveAll("./tmp"))
+		}()
 
 		// setup http client tester
 		func() {
@@ -457,7 +460,7 @@ func TestAPI_DownloadSource(t *testing.T) {
 				t.Error(err)
 			}
 			// do not close file because the request reader should will do it
-			//defer f.Close()
+			// defer f.Close()
 
 			url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 			if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, nil); err != nil {
@@ -472,10 +475,11 @@ func TestAPI_DownloadSource(t *testing.T) {
 
 		a := &api{httpClient: httpTester.Client()}
 		err = a.DownloadSource(ctx, "./tmp", []SourceInfo{{
-			Name:       9999,
-			APIZipName: "test",
-			Version:    draw.V1,
-			Type:       draw.LottoType,
+			APIBase: APIBasePath,
+			Name:    9999,
+			APIPath: "test",
+			Version: draw.V1,
+			Type:    draw.LottoType,
 		}})
 
 		if assert.NoError(t, err) {
@@ -495,7 +499,7 @@ func TestAPI_SourceUpdatedAt(t *testing.T) {
 		//nolint:staticcheck // ignore SA1012 because we want to test nil context
 		updatedAt, err := a.SourceUpdatedAt(nil, SourceInfo{})
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrNoContext)
+			require.ErrorIs(t, err, ErrNoContext)
 			assert.Empty(t, updatedAt)
 		}
 	})
@@ -503,21 +507,19 @@ func TestAPI_SourceUpdatedAt(t *testing.T) {
 		var err error
 
 		a := NewAPI()
-		updatedAt, err := a.SourceUpdatedAt(ctx, SourceInfo{APIZipName: "%"})
+		updatedAt, err := a.SourceUpdatedAt(ctx, SourceInfo{APIPath: "%"})
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrInvalidHTTPRequest)
+			require.ErrorIs(t, err, ErrInvalidHTTPRequest)
 			assert.Empty(t, updatedAt)
 		}
 	})
 	t.Run("Should return an error because httpclient.Do() has failed", func(t *testing.T) {
 		var req *http.Request
 		var err error
-		var expectedErr error
 		var updatedAt time.Time
 
 		// setup http client tester
 		func() {
-			expectedErr = errors.New("client do has failed")
 			url := fmt.Sprintf("%s/%s", APIBasePath, "test")
 			if req, err = http.NewRequestWithContext(ctx, http.MethodHead, url, nil); err != nil {
 				t.Error(err)
@@ -525,16 +527,16 @@ func TestAPI_SourceUpdatedAt(t *testing.T) {
 
 			httpTester.AddCall(testify.Caller{
 				ExpectedRequest: req,
-				Err:             expectedErr,
+				Err:             ErrHTTPClientDo,
 			})
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{Name: 9999, APIZipName: "test"})
+		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{APIBase: APIBasePath, Name: 9999, APIPath: "test"})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, expectedErr)
+			require.ErrorIs(t, err, ErrHTTPClientDo)
 			assert.Empty(t, updatedAt)
 		}
 	})
@@ -557,11 +559,11 @@ func TestAPI_SourceUpdatedAt(t *testing.T) {
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{Name: 9999, APIZipName: "test"})
+		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{APIBase: APIBasePath, Name: 9999, APIPath: "test"})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
-			assert.ErrorIs(t, err, ErrInvalidResponseHTTP)
+			require.ErrorIs(t, err, ErrInvalidResponseHTTP)
 			assert.Empty(t, updatedAt)
 		}
 	})
@@ -586,7 +588,7 @@ func TestAPI_SourceUpdatedAt(t *testing.T) {
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{Name: 9999, APIZipName: "test"})
+		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{APIBase: APIBasePath, Name: 9999, APIPath: "test"})
 
 		if assert.Error(t, err) {
 			httpTester.ExpectedCalls()
@@ -615,7 +617,7 @@ func TestAPI_SourceUpdatedAt(t *testing.T) {
 		}()
 
 		a := &api{httpClient: httpTester.Client()}
-		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{Name: 9999, APIZipName: "test"})
+		updatedAt, err = a.SourceUpdatedAt(ctx, SourceInfo{APIBase: APIBasePath, Name: 9999, APIPath: "test"})
 
 		if assert.NoError(t, err) {
 			httpTester.ExpectedCalls()
@@ -631,7 +633,7 @@ func TestAPI_LoadFile(t *testing.T) {
 
 		err := a.LoadFile("", SourceInfo{})
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, os.ErrNotExist)
+			require.ErrorIs(t, err, os.ErrNotExist)
 		}
 	})
 	t.Run("Should receive an error because parseCSV has failed", func(t *testing.T) {
@@ -641,7 +643,7 @@ func TestAPI_LoadFile(t *testing.T) {
 			"./draw/testdata/classic-loto-v1.csv",
 			SourceInfo{Version: draw.V0, Type: draw.XmasLottoType})
 		if assert.Error(t, err) {
-			assert.ErrorIs(t, err, ErrInvalidCSVType)
+			require.ErrorIs(t, err, ErrInvalidCSVType)
 		}
 	})
 	t.Run("Should load the file", func(t *testing.T) {
@@ -703,7 +705,7 @@ func TestAPI_Draws(t *testing.T) {
 			},
 		}}}
 
-		assert.EqualValues(t, []draw.Draw{}, a.Draws(Filter{}, draw.OrderNone))
+		assert.Equal(t, []draw.Draw{}, a.Draws(Filter{}, draw.OrderNone))
 	})
 	t.Run("Should return the draws list", func(t *testing.T) {
 		a := &api{draws: []draw.Draw{{
@@ -740,6 +742,6 @@ func TestAPI_Reset(t *testing.T) {
 		}}}
 
 		a.Reset()
-		assert.Len(t, a.draws, 0)
+		assert.Empty(t, a.draws)
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/winning-number/fdj-sdk-lotto/draw/testdata"
 )
 
@@ -25,18 +26,19 @@ func TestCSV4_Convert(t *testing.T) {
 		loadCSV(t, testdata.FileClassicLotoV4, &data)
 		expected := DataSetClassicLottoV4()
 
-		data[0].Date = "invalid date"
+		data[0].Date = invalidDate
 		for i, csv := range data {
 			draw, err := Convert(csv, LottoType)
-			if i == 0 && assert.Error(t, err) {
-				assert.ErrorIs(t, err, ErrCSVDate)
+			if i == 0 {
+				require.ErrorIs(t, err, ErrCSVDate)
 				assert.Empty(t, draw)
-			} else {
-				if assert.NoError(t, err) {
-					assert.Equal(t, expected[i], draw)
-				}
+
+				continue
 			}
 
+			if assert.NoError(t, err) {
+				assert.Equal(t, expected[i], draw)
+			}
 		}
 	})
 	t.Run(
@@ -46,18 +48,19 @@ func TestCSV4_Convert(t *testing.T) {
 			loadCSV(t, testdata.FileClassicLotoV4, &data)
 			expected := DataSetClassicLottoV4()
 
-			data[0].GainR1 = "invalid GainR1"
+			data[0].GainR1 = invalidGain
 			for i, csv := range data {
 				draw, err := Convert(csv, LottoType)
 				if i == 0 && assert.Error(t, err) {
-					assert.ErrorIs(t, err, ErrCSVPrice)
+					require.ErrorIs(t, err, ErrCSVPrice)
 					assert.Empty(t, draw)
-				} else {
-					if assert.NoError(t, err) {
-						assert.Equal(t, expected[i], draw)
-					}
+
+					continue
 				}
 
+				if assert.NoError(t, err) {
+					assert.Equal(t, expected[i], draw)
+				}
 			}
 		})
 	t.Run(
@@ -67,18 +70,19 @@ func TestCSV4_Convert(t *testing.T) {
 			loadCSV(t, testdata.FileClassicLotoV4, &data)
 			expected := DataSetClassicLottoV4()
 
-			data[0].GainR1SecondRoll = "invalid GainR1 Second Roll"
+			data[0].GainR1SecondRoll = invalidGain
 			for i, csv := range data {
 				draw, err := Convert(csv, LottoType)
 				if i == 0 && assert.Error(t, err) {
-					assert.ErrorIs(t, err, ErrCSVPrice)
+					require.ErrorIs(t, err, ErrCSVPrice)
 					assert.Empty(t, draw)
-				} else {
-					if assert.NoError(t, err) {
-						assert.Equal(t, expected[i], draw)
-					}
+
+					continue
 				}
 
+				if assert.NoError(t, err) {
+					assert.Equal(t, expected[i], draw)
+				}
 			}
 		})
 	t.Run("Should return an error on the first draw because winCode has failed", func(t *testing.T) {
@@ -86,18 +90,19 @@ func TestCSV4_Convert(t *testing.T) {
 		loadCSV(t, testdata.FileClassicLotoV4, &data)
 		expected := DataSetClassicLottoV4()
 
-		data[0].GainCode = "invalid Win1"
+		data[0].GainCode = invalidWin
 		for i, csv := range data {
 			draw, err := Convert(csv, LottoType)
 			if i == 0 && assert.Error(t, err) {
-				assert.ErrorIs(t, err, ErrCSVPrice)
+				require.ErrorIs(t, err, ErrCSVPrice)
 				assert.Empty(t, draw)
-			} else {
-				if assert.NoError(t, err) {
-					assert.Equal(t, expected[i], draw)
-				}
+
+				continue
 			}
 
+			if assert.NoError(t, err) {
+				assert.Equal(t, expected[i], draw)
+			}
 		}
 	})
 }

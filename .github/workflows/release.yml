@@ -14,15 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Get tag
         run: |
-          cat CHANGELOG.md | grep "##" | sed 's/## //g' > TAG
+          sed -n 's/^## //p' CHANGELOG.md | head -n 1 > TAG
           echo "RELEASE_TAG=$(cat TAG)" >> $GITHUB_ENV
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

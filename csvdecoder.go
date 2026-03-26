@@ -7,7 +7,7 @@ import (
 
 const keyDrawType = "drawType"
 
-func newInstanceFunc(version draw.Version) draw.DrawConverter {
+func newInstanceFunc(version draw.Version) draw.Converter {
 	switch version {
 	case draw.V0:
 		return &draw.CSV0{}
@@ -25,7 +25,7 @@ func newInstanceFunc(version draw.Version) draw.DrawConverter {
 }
 
 func saveInstanceFunc(instance any, decoder csv.Decoder) (draw.Draw, error) {
-	var drawConv draw.DrawConverter
+	var drawConv draw.Converter
 	var err error
 	var d draw.Draw
 	var ok bool
@@ -34,7 +34,7 @@ func saveInstanceFunc(instance any, decoder csv.Decoder) (draw.Draw, error) {
 	if drawT, ok = decoder.ContextGet(keyDrawType); !ok {
 		return draw.Draw{}, ErrDrawTypeKeyNotFound
 	}
-	if drawConv, ok = instance.(draw.DrawConverter); !ok {
+	if drawConv, ok = instance.(draw.Converter); !ok {
 		return draw.Draw{}, ErrInvalidDrawType
 	}
 	if d, err = draw.Convert(drawConv, (draw.Type)(drawT)); err != nil {

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCoreCSV_metadata(t *testing.T) {
@@ -19,7 +20,7 @@ func TestCoreCSV_metadata(t *testing.T) {
 		m, err := c.metadata(LottoType)
 		if assert.Error(t, err) {
 			assert.Empty(t, m)
-			assert.ErrorIs(t, err, ErrCSVDate)
+			require.ErrorIs(t, err, ErrCSVDate)
 		}
 	})
 	t.Run("Should get an error from dateConverter with an invalid forclosureDate", func(t *testing.T) {
@@ -28,7 +29,7 @@ func TestCoreCSV_metadata(t *testing.T) {
 		m, err := c.metadata(LottoType)
 		if assert.Error(t, err) {
 			assert.Empty(t, m)
-			assert.ErrorIs(t, err, ErrCSVDate)
+			require.ErrorIs(t, err, ErrCSVDate)
 		}
 	})
 	t.Run("Should get an error from dayConverter with an invalid day", func(t *testing.T) {
@@ -37,7 +38,7 @@ func TestCoreCSV_metadata(t *testing.T) {
 		m, err := c.metadata(LottoType)
 		if assert.Error(t, err) {
 			assert.Empty(t, m)
-			assert.ErrorIs(t, err, ErrCSVDay)
+			require.ErrorIs(t, err, ErrCSVDay)
 		}
 	})
 	t.Run("Should convert the metadata", func(t *testing.T) {
@@ -57,7 +58,7 @@ func TestCoreCSV_metadata(t *testing.T) {
 		}
 		m, err := c.metadata(LottoType)
 		if assert.NoError(t, err) {
-			assert.EqualValues(t, expectedMetadata, m)
+			assert.Equal(t, expectedMetadata, m)
 		}
 	})
 }

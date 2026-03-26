@@ -7,9 +7,11 @@ import "strings"
 // It implement the second roll.
 type CSV4 struct {
 	coreCSV
-	JokerPlus           string `csv:"numero_jokerplus"`
-	GainCode            string `csv:"rapport_codes_gagnants"`
-	WinCodes            string `csv:"codes_gagnants"`
+
+	JokerPlus string `csv:"numero_jokerplus"`
+	GainCode  string `csv:"rapport_codes_gagnants"`
+	WinCodes  string `csv:"codes_gagnants"`
+	//nolint:misspell // This field is named like this in the CSV file.
 	WinOrder            string `csv:"combinaison_gagnante_en_ordre_croissant"`
 	GainR1              string `csv:"rapport_du_rang1"`
 	GainR2              string `csv:"rapport_du_rang2"`
@@ -21,38 +23,37 @@ type CSV4 struct {
 	GainR8              string `csv:"rapport_du_rang8"`
 	GainR9              string `csv:"rapport_du_rang9"`
 	PromotionSecondRoll string `csv:"promotion_second_tirage"`
-	WinOrderSecondRoll  string `csv:"combinaison_gagnant_second_tirage_en_ordre_croissant"`
-	GainR1SecondRoll    string `csv:"rapport_du_rang1_second_tirage"`
-	GainR2SecondRoll    string `csv:"rapport_du_rang2_second_tirage"`
-	GainR3SecondRoll    string `csv:"rapport_du_rang3_second_tirage"`
-	GainR4SecondRoll    string `csv:"rapport_du_rang4_second_tirage"`
-	NumberWinCodes      int32  `csv:"nombre_de_codes_gagnants"`
-	B1                  int32  `csv:"boule_1"`
-	B2                  int32  `csv:"boule_2"`
-	B3                  int32  `csv:"boule_3"`
-	B4                  int32  `csv:"boule_4"`
-	B5                  int32  `csv:"boule_5"`
-	LuckyBall           int32  `csv:"numero_chance"`
-	WinnerR1            int32  `csv:"nombre_de_gagnant_au_rang1"`
-	WinnerR2            int32  `csv:"nombre_de_gagnant_au_rang2"`
-	WinnerR3            int32  `csv:"nombre_de_gagnant_au_rang3"`
-	WinnerR4            int32  `csv:"nombre_de_gagnant_au_rang4"`
-	WinnerR5            int32  `csv:"nombre_de_gagnant_au_rang5"`
-	WinnerR6            int32  `csv:"nombre_de_gagnant_au_rang6"`
-	WinnerR7            int32  `csv:"nombre_de_gagnant_au_rang7"`
-	WinnerR8            int32  `csv:"nombre_de_gagnant_au_rang8"`
-	WinnerR9            int32  `csv:"nombre_de_gagnant_au_rang9"`
-
-	B1SecondRoll int32 `csv:"boule_1_second_tirage"`
-	B2SecondRoll int32 `csv:"boule_2_second_tirage"`
-	B3SecondRoll int32 `csv:"boule_3_second_tirage"`
-	B4SecondRoll int32 `csv:"boule_4_second_tirage"`
-	B5SecondRoll int32 `csv:"boule_5_second_tirage"`
-
-	WinnerR1SecondRoll int32 `csv:"nombre_de_gagnant_au_rang_1_second_tirage"`
-	WinnerR2SecondRoll int32 `csv:"nombre_de_gagnant_au_rang_2_second_tirage"`
-	WinnerR3SecondRoll int32 `csv:"nombre_de_gagnant_au_rang_3_second_tirage"`
-	WinnerR4SecondRoll int32 `csv:"nombre_de_gagnant_au_rang_4_second_tirage"`
+	//nolint:misspell // This field is named like this in the CSV file.
+	WinOrderSecondRoll string `csv:"combinaison_gagnant_second_tirage_en_ordre_croissant"`
+	GainR1SecondRoll   string `csv:"rapport_du_rang1_second_tirage"`
+	GainR2SecondRoll   string `csv:"rapport_du_rang2_second_tirage"`
+	GainR3SecondRoll   string `csv:"rapport_du_rang3_second_tirage"`
+	GainR4SecondRoll   string `csv:"rapport_du_rang4_second_tirage"`
+	NumberWinCodes     int32  `csv:"nombre_de_codes_gagnants"`
+	B1                 int32  `csv:"boule_1"`
+	B2                 int32  `csv:"boule_2"`
+	B3                 int32  `csv:"boule_3"`
+	B4                 int32  `csv:"boule_4"`
+	B5                 int32  `csv:"boule_5"`
+	LuckyBall          int32  `csv:"numero_chance"`
+	WinnerR1           int32  `csv:"nombre_de_gagnant_au_rang1"`
+	WinnerR2           int32  `csv:"nombre_de_gagnant_au_rang2"`
+	WinnerR3           int32  `csv:"nombre_de_gagnant_au_rang3"`
+	WinnerR4           int32  `csv:"nombre_de_gagnant_au_rang4"`
+	WinnerR5           int32  `csv:"nombre_de_gagnant_au_rang5"`
+	WinnerR6           int32  `csv:"nombre_de_gagnant_au_rang6"`
+	WinnerR7           int32  `csv:"nombre_de_gagnant_au_rang7"`
+	WinnerR8           int32  `csv:"nombre_de_gagnant_au_rang8"`
+	WinnerR9           int32  `csv:"nombre_de_gagnant_au_rang9"`
+	B1SecondRoll       int32  `csv:"boule_1_second_tirage"`
+	B2SecondRoll       int32  `csv:"boule_2_second_tirage"`
+	B3SecondRoll       int32  `csv:"boule_3_second_tirage"`
+	B4SecondRoll       int32  `csv:"boule_4_second_tirage"`
+	B5SecondRoll       int32  `csv:"boule_5_second_tirage"`
+	WinnerR1SecondRoll int32  `csv:"nombre_de_gagnant_au_rang_1_second_tirage"`
+	WinnerR2SecondRoll int32  `csv:"nombre_de_gagnant_au_rang_2_second_tirage"`
+	WinnerR3SecondRoll int32  `csv:"nombre_de_gagnant_au_rang_3_second_tirage"`
+	WinnerR4SecondRoll int32  `csv:"nombre_de_gagnant_au_rang_4_second_tirage"`
 }
 
 func (c CSV4) winCode() (WinCode, error) {
@@ -127,7 +128,7 @@ func (c CSV4) joker() Joker {
 }
 
 // roll returns the roll of the draw
-// this version implements the second roll
+// this version implements the second roll.
 func (c CSV4) roll() Roll {
 	return Roll{
 		First:     []int32{c.B1, c.B2, c.B3, c.B4, c.B5},

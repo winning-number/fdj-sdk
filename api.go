@@ -16,13 +16,20 @@ import (
 	"github.com/winning-number/fdj-sdk-lotto/draw"
 )
 
+// HTTP Errors types.
 var (
+	ErrInvalidResponseHTTP  = errors.New("response http is invalid")
+	ErrInvalidHTTPRequest   = errors.New("http request is invalid")
+	ErrUnexpectedHTTPStatus = errors.New("unexpected http status code")
+	ErrHTTPClientDo         = errors.New("http client do request error")
+)
+
+// Application errors types.
+var (
+	ErrNoContext             = errors.New("context is nil")
 	ErrInvalidDrawType       = errors.New("draw type instance is invalid")
 	ErrInvalidCSVType        = errors.New("csv type instance is invalid")
-	ErrInvalidResponseHTTP   = errors.New("response http is invalid")
 	ErrInvalidContextDecoder = errors.New("context decoder is invalid")
-	ErrInvalidHTTPRequest    = errors.New("http request is invalid")
-	ErrNoContext             = errors.New("context is nil")
 	ErrDrawTypeKeyNotFound   = errors.New("draw type key not found in the context recorder")
 )
 
@@ -30,32 +37,35 @@ var (
 // It can load the history source from the FDJ archive or from a file.
 // To get a default api instance, use NewAPI function.
 //
-//go:generate mockery --name=API --output=mocks --filename=api.go --outpkg=mocks
+//mockery:generate: true
 type API interface {
-	// LoadAPI loads the history source from the FDJ archive
+	// LoadAPI loads the history source from the FDJ archive.
 	LoadSource(ctx context.Context, source []SourceInfo) error
-	// DownloadSource downloads the history source from the FDJ archive
+	// DownloadSource downloads the history source from the FDJ archive.
 	DownloadSource(ctx context.Context, path string, source []SourceInfo) error
-	// SourceUpdatedAt returns the last update time of the history source
+	// SourceUpdatedAt returns the last update time of the history source.
 	SourceUpdatedAt(ctx context.Context, source SourceInfo) (time.Time, error)
-	// LoadFile loads the history source from a file
-	// source is used to know the type of the source
-	// File must be a csv file with ';' separator
+	// LoadFile loads the history source from a file.
+	// source is used to know the type of the source.
+	// File must be a csv file with ';' separator.
 	LoadFile(path string, source SourceInfo) error
-	// NDraws returns the number of draws
+	// NDraws returns the number of draws.
 	NDraws(filter Filter) int64
-	// Draws returns the draws depending on the filter
+	// Draws returns the draws depending on the filter.
 	Draws(filter Filter, order draw.OrderType) []draw.Draw
-	// Reset resets the draws records
+	// DuplicatedDrawIDs returns the draws ID was considering like duplicated.
+	DuplicatedDrawIDs() []string
+	// Reset resets the draws records.
 	Reset()
 }
 
 type api struct {
-	httpClient *http.Client
-	draws      []draw.Draw
+	httpClient        *http.Client
+	draws             []draw.Draw
+	duplicatedDrawIDs []string
 }
 
-// NewAPI returns a new API
+// NewAPI returns a new API.
 func NewAPI() API {
 	return &api{
 		httpClient: xhttp.NewClient(),
@@ -76,7 +86,7 @@ func (a *api) LoadSource(ctx context.Context, source []SourceInfo) error {
 		}
 		for i := 0; i < reader.NFiles(); i++ {
 			if buf, err = reader.ContentFile(i); err != nil {
-				return err
+				return fmt.Errorf("failed to get the content file: %w", err)
 			}
 			if err = a.parseCSV(bytes.NewBuffer(buf), s); err != nil {
 				return err
@@ -100,7 +110,7 @@ func (a api) DownloadSource(ctx context.Context, path string, source []SourceInf
 		}
 		for i := 0; i < reader.NFiles(); i++ {
 			if err = reader.WriteFile(i, path); err != nil {
-				return err
+				return fmt.Errorf("failed to write file: %w", err)
 			}
 		}
 	}
@@ -121,19 +131,20 @@ func (a api) SourceUpdatedAt(ctx context.Context, source SourceInfo) (time.Time,
 		return time.Time{}, errors.Join(err, ErrInvalidHTTPRequest)
 	}
 	if resp, err = a.httpClient.Do(req); err != nil {
-		return time.Time{}, err
+		return time.Time{}, errors.Join(ErrHTTPClientDo, err)
 	}
-	defer resp.Body.Close()
+	defer func() { err = errors.Join(err, resp.Body.Close()) }()
+
 	if resp.StatusCode != http.StatusOK {
 		return time.Time{}, errors.Join(
 			ErrInvalidResponseHTTP,
-			fmt.Errorf("with status %s", resp.Status))
+			fmt.Errorf("with status %s: %w", resp.Status, ErrUnexpectedHTTPStatus))
 	}
 	if t, err = time.Parse(
 		"Mon, 02 Jan 2006 15:04:05 MST",
 		resp.Header.Get("Last-Modified"),
 	); err != nil {
-		return time.Time{}, err
+		return time.Time{}, fmt.Errorf("failed to parse time: %w", err)
 	}
 
 	return t, nil
@@ -143,13 +154,15 @@ func (a *api) LoadFile(path string, source SourceInfo) error {
 	var err error
 	var file *os.File
 
+	//nolint:gosec // This function is used to load a file fron the local file system.
+	// It's a security risk and it will be updated in the future to load a file from a Reader.
 	if file, err = os.Open(path); err != nil {
-		return err
+		return fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+	defer func() { err = errors.Join(err, file.Close()) }()
 
 	if err = a.parseCSV(file, source); err != nil {
-		return err
+		return fmt.Errorf("fails to parse csv file: %w", err)
 	}
 
 	return nil
@@ -173,6 +186,15 @@ func (a api) Draws(filter Filter, order draw.OrderType) []draw.Draw {
 	return matchesDraws
 }
 
+func (a *api) DuplicatedDrawIDs() []string {
+	return a.duplicatedDrawIDs
+}
+
+func (a *api) Reset() {
+	a.draws = []draw.Draw{}
+	a.duplicatedDrawIDs = []string{}
+}
+
 func (a *api) parseCSV(input io.Reader, source SourceInfo) error {
 	var err error
 	var csvReader csv.CSV
@@ -191,9 +213,11 @@ func (a *api) parseCSV(input io.Reader, source SourceInfo) error {
 			var d draw.Draw
 
 			if d, saveInstErr = saveInstanceFunc(drawInstance, decoder); saveInstErr != nil {
-				return err
+				return saveInstErr
 			}
-			if draw.DrawFinder(&a.draws, d) {
+			if draw.Finder(&a.draws, d) {
+				a.duplicatedDrawIDs = append(a.duplicatedDrawIDs, d.Metadata.ID)
+
 				return nil
 			}
 			a.draws = append(a.draws, d)
@@ -201,15 +225,15 @@ func (a *api) parseCSV(input io.Reader, source SourceInfo) error {
 			return nil
 		},
 	}); err != nil {
-		return err
+		return fmt.Errorf("failed to create csv decoder: %w", err)
 	}
 	decoder.ContextSet(keyDrawType, (string)(source.Type))
 
 	if warn, err = csvReader.DecodeWithDecoder(decoder); err != nil {
-		return err
+		return fmt.Errorf("failed to decode csv: %w", err)
 	}
 	if len(warn) > 0 {
-		return errors.Join(ErrInvalidCSVType, fmt.Errorf("%v", warn))
+		return fmt.Errorf("error with warnings %v: %w", warn, ErrInvalidCSVType)
 	}
 
 	return nil
@@ -225,22 +249,19 @@ func (a api) requestSource(ctx context.Context, source SourceInfo) (zip.Reader, 
 		return nil, errors.Join(err, ErrInvalidHTTPRequest)
 	}
 	if resp, err = a.httpClient.Do(req); err != nil {
-		return nil, err
+		return nil, errors.Join(ErrHTTPClientDo, err)
 	}
+	defer func() { err = errors.Join(err, resp.Body.Close()) }()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.Join(
 			ErrInvalidResponseHTTP,
-			fmt.Errorf("with response status %s", resp.Status))
+			fmt.Errorf("status %s: %w", resp.Status, ErrUnexpectedHTTPStatus))
 	}
-	defer resp.Body.Close()
 
 	if reader, err = zip.NewReader(resp.Body); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create a new ZIP reader: %w", err)
 	}
 
 	return reader, nil
-}
-
-func (a *api) Reset() {
-	a.draws = []draw.Draw{}
 }

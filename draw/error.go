@@ -2,7 +2,7 @@ package draw
 
 import "github.com/pkg/errors"
 
-// error list
+// error list.
 var (
 	ErrCSVDay     = errors.New("day for dayConverter is invalid")
 	ErrCSVDate    = errors.New("date for dateConverter is invalid")
