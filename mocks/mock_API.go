@@ -6,11 +6,9 @@ package mocks
 
 import (
 	"context"
-	"time"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/winning-number/fdj-sdk-lotto"
-	"github.com/winning-number/fdj-sdk-lotto/draw"
+	"github.com/winning-number/fdj-sdk/source"
 )
 
 // NewMockAPI creates a new instance of MockAPI. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -40,37 +38,45 @@ func (_m *MockAPI) EXPECT() *MockAPI_Expecter {
 	return &MockAPI_Expecter{mock: &_m.Mock}
 }
 
-// DownloadSource provides a mock function for the type MockAPI
-func (_mock *MockAPI) DownloadSource(ctx context.Context, path string, source []lotto.SourceInfo) error {
-	ret := _mock.Called(ctx, path, source)
+// DownloadHistory provides a mock function for the type MockAPI
+func (_mock *MockAPI) DownloadHistory(ctx context.Context, datasetID string) (source.Source, error) {
+	ret := _mock.Called(ctx, datasetID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DownloadSource")
+		panic("no return value specified for DownloadHistory")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []lotto.SourceInfo) error); ok {
-		r0 = returnFunc(ctx, path, source)
-	} else {
-		r0 = ret.Error(0)
+	var r0 source.Source
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (source.Source, error)); ok {
+		return returnFunc(ctx, datasetID)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) source.Source); ok {
+		r0 = returnFunc(ctx, datasetID)
+	} else {
+		r0 = ret.Get(0).(source.Source)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, datasetID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// MockAPI_DownloadSource_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DownloadSource'
-type MockAPI_DownloadSource_Call struct {
+// MockAPI_DownloadHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DownloadHistory'
+type MockAPI_DownloadHistory_Call struct {
 	*mock.Call
 }
 
-// DownloadSource is a helper method to define mock.On call
+// DownloadHistory is a helper method to define mock.On call
 //   - ctx context.Context
-//   - path string
-//   - source []lotto.SourceInfo
-func (_e *MockAPI_Expecter) DownloadSource(ctx interface{}, path interface{}, source interface{}) *MockAPI_DownloadSource_Call {
-	return &MockAPI_DownloadSource_Call{Call: _e.mock.On("DownloadSource", ctx, path, source)}
+//   - datasetID string
+func (_e *MockAPI_Expecter) DownloadHistory(ctx interface{}, datasetID interface{}) *MockAPI_DownloadHistory_Call {
+	return &MockAPI_DownloadHistory_Call{Call: _e.mock.On("DownloadHistory", ctx, datasetID)}
 }
 
-func (_c *MockAPI_DownloadSource_Call) Run(run func(ctx context.Context, path string, source []lotto.SourceInfo)) *MockAPI_DownloadSource_Call {
+func (_c *MockAPI_DownloadHistory_Call) Run(run func(ctx context.Context, datasetID string)) *MockAPI_DownloadHistory_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -80,70 +86,6 @@ func (_c *MockAPI_DownloadSource_Call) Run(run func(ctx context.Context, path st
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []lotto.SourceInfo
-		if args[2] != nil {
-			arg2 = args[2].([]lotto.SourceInfo)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAPI_DownloadSource_Call) Return(err error) *MockAPI_DownloadSource_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockAPI_DownloadSource_Call) RunAndReturn(run func(ctx context.Context, path string, source []lotto.SourceInfo) error) *MockAPI_DownloadSource_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Draws provides a mock function for the type MockAPI
-func (_mock *MockAPI) Draws(filter lotto.Filter, order draw.OrderType) []draw.Draw {
-	ret := _mock.Called(filter, order)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Draws")
-	}
-
-	var r0 []draw.Draw
-	if returnFunc, ok := ret.Get(0).(func(lotto.Filter, draw.OrderType) []draw.Draw); ok {
-		r0 = returnFunc(filter, order)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]draw.Draw)
-		}
-	}
-	return r0
-}
-
-// MockAPI_Draws_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Draws'
-type MockAPI_Draws_Call struct {
-	*mock.Call
-}
-
-// Draws is a helper method to define mock.On call
-//   - filter lotto.Filter
-//   - order draw.OrderType
-func (_e *MockAPI_Expecter) Draws(filter interface{}, order interface{}) *MockAPI_Draws_Call {
-	return &MockAPI_Draws_Call{Call: _e.mock.On("Draws", filter, order)}
-}
-
-func (_c *MockAPI_Draws_Call) Run(run func(filter lotto.Filter, order draw.OrderType)) *MockAPI_Draws_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 lotto.Filter
-		if args[0] != nil {
-			arg0 = args[0].(lotto.Filter)
-		}
-		var arg1 draw.OrderType
-		if args[1] != nil {
-			arg1 = args[1].(draw.OrderType)
-		}
 		run(
 			arg0,
 			arg1,
@@ -152,307 +94,63 @@ func (_c *MockAPI_Draws_Call) Run(run func(filter lotto.Filter, order draw.Order
 	return _c
 }
 
-func (_c *MockAPI_Draws_Call) Return(draws []draw.Draw) *MockAPI_Draws_Call {
-	_c.Call.Return(draws)
+func (_c *MockAPI_DownloadHistory_Call) Return(source1 source.Source, err error) *MockAPI_DownloadHistory_Call {
+	_c.Call.Return(source1, err)
 	return _c
 }
 
-func (_c *MockAPI_Draws_Call) RunAndReturn(run func(filter lotto.Filter, order draw.OrderType) []draw.Draw) *MockAPI_Draws_Call {
+func (_c *MockAPI_DownloadHistory_Call) RunAndReturn(run func(ctx context.Context, datasetID string) (source.Source, error)) *MockAPI_DownloadHistory_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DuplicatedDrawIDs provides a mock function for the type MockAPI
-func (_mock *MockAPI) DuplicatedDrawIDs() []string {
-	ret := _mock.Called()
+// HistoryMetadata provides a mock function for the type MockAPI
+func (_mock *MockAPI) HistoryMetadata(ctx context.Context, datasetID string) (source.Metadata, error) {
+	ret := _mock.Called(ctx, datasetID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DuplicatedDrawIDs")
+		panic("no return value specified for HistoryMetadata")
 	}
 
-	var r0 []string
-	if returnFunc, ok := ret.Get(0).(func() []string); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	return r0
-}
-
-// MockAPI_DuplicatedDrawIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DuplicatedDrawIDs'
-type MockAPI_DuplicatedDrawIDs_Call struct {
-	*mock.Call
-}
-
-// DuplicatedDrawIDs is a helper method to define mock.On call
-func (_e *MockAPI_Expecter) DuplicatedDrawIDs() *MockAPI_DuplicatedDrawIDs_Call {
-	return &MockAPI_DuplicatedDrawIDs_Call{Call: _e.mock.On("DuplicatedDrawIDs")}
-}
-
-func (_c *MockAPI_DuplicatedDrawIDs_Call) Run(run func()) *MockAPI_DuplicatedDrawIDs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockAPI_DuplicatedDrawIDs_Call) Return(strings []string) *MockAPI_DuplicatedDrawIDs_Call {
-	_c.Call.Return(strings)
-	return _c
-}
-
-func (_c *MockAPI_DuplicatedDrawIDs_Call) RunAndReturn(run func() []string) *MockAPI_DuplicatedDrawIDs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// LoadFile provides a mock function for the type MockAPI
-func (_mock *MockAPI) LoadFile(path string, source lotto.SourceInfo) error {
-	ret := _mock.Called(path, source)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LoadFile")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, lotto.SourceInfo) error); ok {
-		r0 = returnFunc(path, source)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockAPI_LoadFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadFile'
-type MockAPI_LoadFile_Call struct {
-	*mock.Call
-}
-
-// LoadFile is a helper method to define mock.On call
-//   - path string
-//   - source lotto.SourceInfo
-func (_e *MockAPI_Expecter) LoadFile(path interface{}, source interface{}) *MockAPI_LoadFile_Call {
-	return &MockAPI_LoadFile_Call{Call: _e.mock.On("LoadFile", path, source)}
-}
-
-func (_c *MockAPI_LoadFile_Call) Run(run func(path string, source lotto.SourceInfo)) *MockAPI_LoadFile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
-		if args[0] != nil {
-			arg0 = args[0].(string)
-		}
-		var arg1 lotto.SourceInfo
-		if args[1] != nil {
-			arg1 = args[1].(lotto.SourceInfo)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAPI_LoadFile_Call) Return(err error) *MockAPI_LoadFile_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockAPI_LoadFile_Call) RunAndReturn(run func(path string, source lotto.SourceInfo) error) *MockAPI_LoadFile_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// LoadSource provides a mock function for the type MockAPI
-func (_mock *MockAPI) LoadSource(ctx context.Context, source []lotto.SourceInfo) error {
-	ret := _mock.Called(ctx, source)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LoadSource")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []lotto.SourceInfo) error); ok {
-		r0 = returnFunc(ctx, source)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockAPI_LoadSource_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadSource'
-type MockAPI_LoadSource_Call struct {
-	*mock.Call
-}
-
-// LoadSource is a helper method to define mock.On call
-//   - ctx context.Context
-//   - source []lotto.SourceInfo
-func (_e *MockAPI_Expecter) LoadSource(ctx interface{}, source interface{}) *MockAPI_LoadSource_Call {
-	return &MockAPI_LoadSource_Call{Call: _e.mock.On("LoadSource", ctx, source)}
-}
-
-func (_c *MockAPI_LoadSource_Call) Run(run func(ctx context.Context, source []lotto.SourceInfo)) *MockAPI_LoadSource_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 []lotto.SourceInfo
-		if args[1] != nil {
-			arg1 = args[1].([]lotto.SourceInfo)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAPI_LoadSource_Call) Return(err error) *MockAPI_LoadSource_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockAPI_LoadSource_Call) RunAndReturn(run func(ctx context.Context, source []lotto.SourceInfo) error) *MockAPI_LoadSource_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// NDraws provides a mock function for the type MockAPI
-func (_mock *MockAPI) NDraws(filter lotto.Filter) int64 {
-	ret := _mock.Called(filter)
-
-	if len(ret) == 0 {
-		panic("no return value specified for NDraws")
-	}
-
-	var r0 int64
-	if returnFunc, ok := ret.Get(0).(func(lotto.Filter) int64); ok {
-		r0 = returnFunc(filter)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-	return r0
-}
-
-// MockAPI_NDraws_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NDraws'
-type MockAPI_NDraws_Call struct {
-	*mock.Call
-}
-
-// NDraws is a helper method to define mock.On call
-//   - filter lotto.Filter
-func (_e *MockAPI_Expecter) NDraws(filter interface{}) *MockAPI_NDraws_Call {
-	return &MockAPI_NDraws_Call{Call: _e.mock.On("NDraws", filter)}
-}
-
-func (_c *MockAPI_NDraws_Call) Run(run func(filter lotto.Filter)) *MockAPI_NDraws_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 lotto.Filter
-		if args[0] != nil {
-			arg0 = args[0].(lotto.Filter)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAPI_NDraws_Call) Return(n int64) *MockAPI_NDraws_Call {
-	_c.Call.Return(n)
-	return _c
-}
-
-func (_c *MockAPI_NDraws_Call) RunAndReturn(run func(filter lotto.Filter) int64) *MockAPI_NDraws_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Reset provides a mock function for the type MockAPI
-func (_mock *MockAPI) Reset() {
-	_mock.Called()
-	return
-}
-
-// MockAPI_Reset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Reset'
-type MockAPI_Reset_Call struct {
-	*mock.Call
-}
-
-// Reset is a helper method to define mock.On call
-func (_e *MockAPI_Expecter) Reset() *MockAPI_Reset_Call {
-	return &MockAPI_Reset_Call{Call: _e.mock.On("Reset")}
-}
-
-func (_c *MockAPI_Reset_Call) Run(run func()) *MockAPI_Reset_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockAPI_Reset_Call) Return() *MockAPI_Reset_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *MockAPI_Reset_Call) RunAndReturn(run func()) *MockAPI_Reset_Call {
-	_c.Run(run)
-	return _c
-}
-
-// SourceUpdatedAt provides a mock function for the type MockAPI
-func (_mock *MockAPI) SourceUpdatedAt(ctx context.Context, source lotto.SourceInfo) (time.Time, error) {
-	ret := _mock.Called(ctx, source)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SourceUpdatedAt")
-	}
-
-	var r0 time.Time
+	var r0 source.Metadata
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, lotto.SourceInfo) (time.Time, error)); ok {
-		return returnFunc(ctx, source)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (source.Metadata, error)); ok {
+		return returnFunc(ctx, datasetID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, lotto.SourceInfo) time.Time); ok {
-		r0 = returnFunc(ctx, source)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) source.Metadata); ok {
+		r0 = returnFunc(ctx, datasetID)
 	} else {
-		r0 = ret.Get(0).(time.Time)
+		r0 = ret.Get(0).(source.Metadata)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, lotto.SourceInfo) error); ok {
-		r1 = returnFunc(ctx, source)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, datasetID)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockAPI_SourceUpdatedAt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SourceUpdatedAt'
-type MockAPI_SourceUpdatedAt_Call struct {
+// MockAPI_HistoryMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HistoryMetadata'
+type MockAPI_HistoryMetadata_Call struct {
 	*mock.Call
 }
 
-// SourceUpdatedAt is a helper method to define mock.On call
+// HistoryMetadata is a helper method to define mock.On call
 //   - ctx context.Context
-//   - source lotto.SourceInfo
-func (_e *MockAPI_Expecter) SourceUpdatedAt(ctx interface{}, source interface{}) *MockAPI_SourceUpdatedAt_Call {
-	return &MockAPI_SourceUpdatedAt_Call{Call: _e.mock.On("SourceUpdatedAt", ctx, source)}
+//   - datasetID string
+func (_e *MockAPI_Expecter) HistoryMetadata(ctx interface{}, datasetID interface{}) *MockAPI_HistoryMetadata_Call {
+	return &MockAPI_HistoryMetadata_Call{Call: _e.mock.On("HistoryMetadata", ctx, datasetID)}
 }
 
-func (_c *MockAPI_SourceUpdatedAt_Call) Run(run func(ctx context.Context, source lotto.SourceInfo)) *MockAPI_SourceUpdatedAt_Call {
+func (_c *MockAPI_HistoryMetadata_Call) Run(run func(ctx context.Context, datasetID string)) *MockAPI_HistoryMetadata_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 lotto.SourceInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(lotto.SourceInfo)
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
@@ -462,12 +160,12 @@ func (_c *MockAPI_SourceUpdatedAt_Call) Run(run func(ctx context.Context, source
 	return _c
 }
 
-func (_c *MockAPI_SourceUpdatedAt_Call) Return(time1 time.Time, err error) *MockAPI_SourceUpdatedAt_Call {
-	_c.Call.Return(time1, err)
+func (_c *MockAPI_HistoryMetadata_Call) Return(metadata source.Metadata, err error) *MockAPI_HistoryMetadata_Call {
+	_c.Call.Return(metadata, err)
 	return _c
 }
 
-func (_c *MockAPI_SourceUpdatedAt_Call) RunAndReturn(run func(ctx context.Context, source lotto.SourceInfo) (time.Time, error)) *MockAPI_SourceUpdatedAt_Call {
+func (_c *MockAPI_HistoryMetadata_Call) RunAndReturn(run func(ctx context.Context, datasetID string) (source.Metadata, error)) *MockAPI_HistoryMetadata_Call {
 	_c.Call.Return(run)
 	return _c
 }
