@@ -1,267 +1,178 @@
-package lotto
+// Package fdj provide a FDJ's sdk to call the history endpoint to get game's data.
+package fdj
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
+	"mime"
 	"net/http"
-	"os"
+	"strconv"
 	"time"
 
-	"github.com/gofast-pkg/csv"
 	xhttp "github.com/gofast-pkg/http"
 	"github.com/gofast-pkg/zip"
-	"github.com/winning-number/fdj-sdk-lotto/draw"
+	"github.com/winning-number/fdj-sdk/source"
 )
 
-// HTTP Errors types.
+const (
+	// APIBaseURL is the base URL for the FDJ API.
+	APIBaseURL = "https://www.sto.api.fdj.fr/anonymous/service-draw-info/v3/documentations"
+
+	headerContentDisposition = "content-disposition"
+	headerContentLength      = "content-length"
+	headerDateReceived       = "date-received"
+	headerFileName           = "filename"
+)
+
+// Errors types specific to the APIV3 implementation.
 var (
-	ErrInvalidResponseHTTP  = errors.New("response http is invalid")
-	ErrInvalidHTTPRequest   = errors.New("http request is invalid")
-	ErrUnexpectedHTTPStatus = errors.New("unexpected http status code")
-	ErrHTTPClientDo         = errors.New("http client do request error")
+	// HTTP errors.
+	ErrNilContext   = errors.New("context is nil")
+	ErrHTTPRequest  = errors.New("http request error")
+	ErrHTTPClient   = errors.New("http client error")
+	ErrHTTPResponse = errors.New("http response error")
+
+	// Metadata errors.
+	ErrMissingContentDisposition = errors.New("Content-Disposition header is missing")
+	ErrMissingContentLength      = errors.New("missing Content-Length header")
+	ErrMissingDateReceived       = errors.New("missing date-received header")
+	ErrInvalidContentDisposition = errors.New("invalid Content-Disposition header")
+	ErrMissingFilename           = errors.New("filename parameter is missing in Content-Disposition header")
+	ErrInvalidContentLength      = errors.New("invalid Content-Length header")
+	ErrInvalidDateReceived       = errors.New("invalid date-received header")
+	ErrFailedToParseMetadata     = errors.New("failed to parse metadata from response headers")
+
+	// Zip reader errors.
+	ErrCreateZipReader = errors.New("failed to create zip reader")
 )
 
-// Application errors types.
-var (
-	ErrNoContext             = errors.New("context is nil")
-	ErrInvalidDrawType       = errors.New("draw type instance is invalid")
-	ErrInvalidCSVType        = errors.New("csv type instance is invalid")
-	ErrInvalidContextDecoder = errors.New("context decoder is invalid")
-	ErrDrawTypeKeyNotFound   = errors.New("draw type key not found in the context recorder")
-)
-
-// API is the interface to load the history source.
-// It can load the history source from the FDJ archive or from a file.
-// To get a default api instance, use NewAPI function.
+// API is the interface to load the history source from the FDJ API.
+// It can load the history source from the FDJ API.
 //
 //mockery:generate: true
 type API interface {
-	// LoadAPI loads the history source from the FDJ archive.
-	LoadSource(ctx context.Context, source []SourceInfo) error
-	// DownloadSource downloads the history source from the FDJ archive.
-	DownloadSource(ctx context.Context, path string, source []SourceInfo) error
-	// SourceUpdatedAt returns the last update time of the history source.
-	SourceUpdatedAt(ctx context.Context, source SourceInfo) (time.Time, error)
-	// LoadFile loads the history source from a file.
-	// source is used to know the type of the source.
-	// File must be a csv file with ';' separator.
-	LoadFile(path string, source SourceInfo) error
-	// NDraws returns the number of draws.
-	NDraws(filter Filter) int64
-	// Draws returns the draws depending on the filter.
-	Draws(filter Filter, order draw.OrderType) []draw.Draw
-	// DuplicatedDrawIDs returns the draws ID was considering like duplicated.
-	DuplicatedDrawIDs() []string
-	// Reset resets the draws records.
-	Reset()
+	// DownloadHistory downloads the history source from the FDJ API.
+	DownloadHistory(ctx context.Context, datasetID string) (source.Source, error)
+	// HistoryMetadata fetches the metadata of the history source from the FDJ API.
+	HistoryMetadata(ctx context.Context, datasetID string) (source.Metadata, error)
 }
 
 type api struct {
-	httpClient        *http.Client
-	draws             []draw.Draw
-	duplicatedDrawIDs []string
+	domain     string
+	httpClient *http.Client
 }
 
-// NewAPI returns a new API.
+// NewAPI returns a new API instance.
 func NewAPI() API {
 	return &api{
+		domain:     APIBaseURL,
 		httpClient: xhttp.NewClient(),
 	}
 }
 
-func (a *api) LoadSource(ctx context.Context, source []SourceInfo) error {
-	var err error
-	var reader zip.Reader
-	var buf []byte
-
-	if ctx == nil {
-		return ErrNoContext
-	}
-	for _, s := range source {
-		if reader, err = a.requestSource(ctx, s); err != nil {
-			return err
-		}
-		for i := 0; i < reader.NFiles(); i++ {
-			if buf, err = reader.ContentFile(i); err != nil {
-				return fmt.Errorf("failed to get the content file: %w", err)
-			}
-			if err = a.parseCSV(bytes.NewBuffer(buf), s); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (a api) DownloadSource(ctx context.Context, path string, source []SourceInfo) error {
-	var err error
-	var reader zip.Reader
-
-	if ctx == nil {
-		return ErrNoContext
-	}
-	for _, s := range source {
-		if reader, err = a.requestSource(ctx, s); err != nil {
-			return err
-		}
-		for i := 0; i < reader.NFiles(); i++ {
-			if err = reader.WriteFile(i, path); err != nil {
-				return fmt.Errorf("failed to write file: %w", err)
-			}
-		}
-	}
-
-	return nil
-}
-
-func (a api) SourceUpdatedAt(ctx context.Context, source SourceInfo) (time.Time, error) {
-	var err error
+func (a *api) DownloadHistory(ctx context.Context, identifier string) (source.Source, error) {
+	var ret source.Source
 	var resp *http.Response
-	var req *http.Request
-	var t time.Time
+	var err error
 
-	if ctx == nil {
-		return time.Time{}, ErrNoContext
-	}
-	if req, err = http.NewRequestWithContext(ctx, http.MethodHead, source.URL(), nil); err != nil {
-		return time.Time{}, errors.Join(err, ErrInvalidHTTPRequest)
-	}
-	if resp, err = a.httpClient.Do(req); err != nil {
-		return time.Time{}, errors.Join(ErrHTTPClientDo, err)
+	if resp, err = a.do(ctx, identifier); err != nil {
+		return source.Source{}, err
 	}
 	defer func() { err = errors.Join(err, resp.Body.Close()) }()
 
-	if resp.StatusCode != http.StatusOK {
-		return time.Time{}, errors.Join(
-			ErrInvalidResponseHTTP,
-			fmt.Errorf("with status %s: %w", resp.Status, ErrUnexpectedHTTPStatus))
-	}
-	if t, err = time.Parse(
-		"Mon, 02 Jan 2006 15:04:05 MST",
-		resp.Header.Get("Last-Modified"),
-	); err != nil {
-		return time.Time{}, fmt.Errorf("failed to parse time: %w", err)
+	ret.Metadata, err = buildMetadata(resp.Header, identifier)
+	if err != nil {
+		return source.Source{}, errors.Join(err, ErrFailedToParseMetadata)
 	}
 
-	return t, nil
+	ret.Data, err = zip.NewReader(resp.Body)
+	if err != nil {
+		return source.Source{}, errors.Join(err, ErrCreateZipReader)
+	}
+
+	return ret, nil
 }
 
-func (a *api) LoadFile(path string, source SourceInfo) error {
-	var err error
-	var file *os.File
-
-	//nolint:gosec // This function is used to load a file fron the local file system.
-	// It's a security risk and it will be updated in the future to load a file from a Reader.
-	if file, err = os.Open(path); err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer func() { err = errors.Join(err, file.Close()) }()
-
-	if err = a.parseCSV(file, source); err != nil {
-		return fmt.Errorf("fails to parse csv file: %w", err)
-	}
-
-	return nil
-}
-
-func (a api) NDraws(filter Filter) int64 {
-	return int64(len(a.Draws(filter, draw.OrderNone)))
-}
-
-func (a api) Draws(filter Filter, order draw.OrderType) []draw.Draw {
-	matchesDraws := []draw.Draw{}
-
-	for i := range a.draws {
-		if !filter.Match(&a.draws[i]) {
-			continue
-		}
-		matchesDraws = append(matchesDraws, a.draws[i])
-	}
-	draw.OrderDraws(&matchesDraws, order)
-
-	return matchesDraws
-}
-
-func (a *api) DuplicatedDrawIDs() []string {
-	return a.duplicatedDrawIDs
-}
-
-func (a *api) Reset() {
-	a.draws = []draw.Draw{}
-	a.duplicatedDrawIDs = []string{}
-}
-
-func (a *api) parseCSV(input io.Reader, source SourceInfo) error {
-	var err error
-	var csvReader csv.CSV
-	var decoder csv.Decoder
-	var warn csv.Warning
-
-	if csvReader, err = csv.New(input, ';'); err != nil {
-		return err
-	}
-	if decoder, err = csv.NewDecoder(csv.ConfigDecoder{
-		NewInstanceFunc: func() any {
-			return newInstanceFunc(source.Version)
-		},
-		SaveInstanceFunc: func(drawInstance any, decoder csv.Decoder) error {
-			var saveInstErr error
-			var d draw.Draw
-
-			if d, saveInstErr = saveInstanceFunc(drawInstance, decoder); saveInstErr != nil {
-				return saveInstErr
-			}
-			if draw.Finder(&a.draws, d) {
-				a.duplicatedDrawIDs = append(a.duplicatedDrawIDs, d.Metadata.ID)
-
-				return nil
-			}
-			a.draws = append(a.draws, d)
-
-			return nil
-		},
-	}); err != nil {
-		return fmt.Errorf("failed to create csv decoder: %w", err)
-	}
-	decoder.ContextSet(keyDrawType, (string)(source.Type))
-
-	if warn, err = csvReader.DecodeWithDecoder(decoder); err != nil {
-		return fmt.Errorf("failed to decode csv: %w", err)
-	}
-	if len(warn) > 0 {
-		return fmt.Errorf("error with warnings %v: %w", warn, ErrInvalidCSVType)
-	}
-
-	return nil
-}
-
-func (a api) requestSource(ctx context.Context, source SourceInfo) (zip.Reader, error) {
-	var err error
+func (a *api) HistoryMetadata(ctx context.Context, identifier string) (source.Metadata, error) {
+	var ret source.Metadata
 	var resp *http.Response
-	var req *http.Request
-	var reader zip.Reader
+	var err error
 
-	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, source.URL(), nil); err != nil {
-		return nil, errors.Join(err, ErrInvalidHTTPRequest)
-	}
-	if resp, err = a.httpClient.Do(req); err != nil {
-		return nil, errors.Join(ErrHTTPClientDo, err)
+	if resp, err = a.do(ctx, identifier); err != nil {
+		return source.Metadata{}, err
 	}
 	defer func() { err = errors.Join(err, resp.Body.Close()) }()
 
+	ret, err = buildMetadata(resp.Header, identifier)
+	if err != nil {
+		return source.Metadata{}, errors.Join(err, ErrFailedToParseMetadata)
+	}
+
+	return ret, nil
+}
+
+func (a *api) do(ctx context.Context, identifier string) (*http.Response, error) {
+	var err error
+	var resp *http.Response
+	var req *http.Request
+
+	if ctx == nil {
+		return nil, ErrNilContext
+	}
+
+	url := fmt.Sprintf("%s/%s", a.domain, identifier)
+	if req, err = http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody); err != nil {
+		return nil, errors.Join(err, ErrHTTPRequest)
+	}
+	if resp, err = a.httpClient.Do(req); err != nil {
+		return nil, errors.Join(ErrHTTPClient, err)
+	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Join(
-			ErrInvalidResponseHTTP,
-			fmt.Errorf("status %s: %w", resp.Status, ErrUnexpectedHTTPStatus))
+		return nil, fmt.Errorf("%s: %w",
+			xhttp.UnexpectedResponseBody(resp),
+			ErrHTTPResponse)
 	}
 
-	if reader, err = zip.NewReader(resp.Body); err != nil {
-		return nil, fmt.Errorf("failed to create a new ZIP reader: %w", err)
+	return resp, nil
+}
+
+func buildMetadata(header http.Header, identifier string) (source.Metadata, error) {
+	var ret source.Metadata
+
+	ret.Identifier = identifier
+
+	contentDisposition := header.Get(headerContentDisposition)
+	if contentDisposition == "" {
+		return source.Metadata{}, ErrMissingContentDisposition
+	}
+	_, params, err := mime.ParseMediaType(contentDisposition)
+	if err != nil {
+		return source.Metadata{}, errors.Join(err, ErrInvalidContentDisposition)
 	}
 
-	return reader, nil
+	var ok bool
+	if ret.FileName, ok = params[headerFileName]; !ok {
+		return source.Metadata{}, ErrMissingFilename
+	}
+
+	contentLength := header.Get(headerContentLength)
+	if contentLength == "" {
+		return source.Metadata{}, ErrMissingContentLength
+	}
+	ret.Size, err = strconv.ParseInt(contentLength, 10, 64)
+	if err != nil {
+		return source.Metadata{}, errors.Join(err, ErrInvalidContentLength)
+	}
+
+	dateReceived := header.Get(headerDateReceived)
+	if dateReceived == "" {
+		return source.Metadata{}, ErrMissingDateReceived
+	}
+	ret.RequestedAt, err = time.Parse(time.RFC3339Nano, dateReceived)
+	if err != nil {
+		return source.Metadata{}, errors.Join(err, ErrInvalidDateReceived)
+	}
+
+	return ret, nil
 }

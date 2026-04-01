@@ -17,3 +17,14 @@ vendor/
 
 # Go workspace file
 go.work
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
