@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/winning-number/fdj-sdk/loto/csv"
-	"github.com/winning-number/fdj-sdk/loto/testdata"
-	"github.com/winning-number/fdj-sdk/model"
+	"github.com/winning-number/fdj-sdk/v2/loto/csv"
+	"github.com/winning-number/fdj-sdk/v2/loto/testdata"
+	"github.com/winning-number/fdj-sdk/v2/model"
 )
 
 func ExpectedMetadata(t *testing.T, change *Metadata, isOld bool) Metadata {

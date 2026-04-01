@@ -8,7 +8,7 @@ import (
 	"context"
 
 	mock "github.com/stretchr/testify/mock"
-	"github.com/winning-number/fdj-sdk/source"
+	"github.com/winning-number/fdj-sdk/v2/source"
 )
 
 // NewMockAPI creates a new instance of MockAPI. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -14,8 +14,8 @@ import (
 	"github.com/gofast-pkg/http/testify"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/winning-number/fdj-sdk/loto"
-	"github.com/winning-number/fdj-sdk/source"
+	"github.com/winning-number/fdj-sdk/v2/loto"
+	"github.com/winning-number/fdj-sdk/v2/source"
 )
 
 const (

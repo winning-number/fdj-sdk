@@ -6,8 +6,8 @@ import (
 	"github.com/gofast-pkg/zip/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/winning-number/fdj-sdk/loto/testdata"
-	"github.com/winning-number/fdj-sdk/source"
+	"github.com/winning-number/fdj-sdk/v2/loto/testdata"
+	"github.com/winning-number/fdj-sdk/v2/source"
 )
 
 const (
