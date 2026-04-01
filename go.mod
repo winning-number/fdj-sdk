@@ -1,4 +1,4 @@
-module github.com/winning-number/fdj-sdk
+module github.com/winning-number/fdj-sdk/v2
 
 go 1.25
 

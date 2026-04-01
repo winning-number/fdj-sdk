@@ -7,8 +7,8 @@ import (
 	"io"
 
 	"github.com/gofast-pkg/csv"
-	xcsv "github.com/winning-number/fdj-sdk/loto/csv"
-	"github.com/winning-number/fdj-sdk/source"
+	xcsv "github.com/winning-number/fdj-sdk/v2/loto/csv"
+	"github.com/winning-number/fdj-sdk/v2/source"
 )
 
 const (

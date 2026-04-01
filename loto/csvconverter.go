@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/winning-number/fdj-sdk/loto/csv"
-	"github.com/winning-number/fdj-sdk/model"
+	"github.com/winning-number/fdj-sdk/v2/loto/csv"
+	"github.com/winning-number/fdj-sdk/v2/model"
 )
 
 // Public error used to convert csv data type to loto model type.

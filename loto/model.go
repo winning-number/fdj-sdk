@@ -3,7 +3,7 @@ package loto
 import (
 	"time"
 
-	"github.com/winning-number/fdj-sdk/model"
+	"github.com/winning-number/fdj-sdk/v2/model"
 )
 
 // Lottery version supported value.

@@ -2,9 +2,9 @@
 
 <!-- Badge section [ci - codecov - release - godoc - code quality - codebeat - license - fossa ]-->
 [![Static Badge](https://img.shields.io/badge/project%20use%20codesystem-green?link=https%3A%2F%2Fgithub.com%2Fgofast-pkg%2Fcodesystem)](https://github.com/gofast-pkg/codesystem)
-![Build status](https://github.com/winning-number/fdj-sdk/actions/workflows/ci.yml/badge.svg)
+![Build status](https://github.com/winning-number/fdj-sdk/v2/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/winning-number/fdj-sdk/branch/main/graph/badge.svg?token=7TCE3QB21E)](https://codecov.io/gh/winning-number/fdj-sdk)
-[![Release](https://img.shields.io/github/release/winning-number/fdj-sdk.svg?style=flat-square)](https://github.com/winning-number/fdj-sdk/releases)
+[![Release](https://img.shields.io/github/release/winning-number/fdj-sdk.svg?style=flat-square)](https://github.com/winning-number/fdj-sdk/v2/releases)
 [![Go Reference](https://pkg.go.dev/badge/github.com/winning-number/fdj-sdk.svg)](https://pkg.go.dev/github.com/winning-number/fdj-sdk)
 [![Go Report Card](https://goreportcard.com/badge/github.com/winning-number/fdj-sdk)](https://goreportcard.com/report/github.com/winning-number/fdj-sdk)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwinning-number%2Ffdj-sdk.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwinning-number%2Ffdj-sdk?ref=badge_shield)
@@ -153,7 +153,7 @@ For all changes, please update the CHANGELOG.txt file by replacing the existant 
 
 Thank you &nbsp;:pray:&nbsp;&nbsp;:+1:&nbsp;
 
-<a href="https://github.com/winning-number/fdj-sdk/graphs/contributors">
+<a href="https://github.com/winning-number/fdj-sdk/v2/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=winning-number/fdj-sdk" />
 </a>
 

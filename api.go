@@ -12,7 +12,7 @@ import (
 
 	xhttp "github.com/gofast-pkg/http"
 	"github.com/gofast-pkg/zip"
-	"github.com/winning-number/fdj-sdk/source"
+	"github.com/winning-number/fdj-sdk/v2/source"
 )
 
 const (

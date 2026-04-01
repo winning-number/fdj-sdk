@@ -1,7 +1,8 @@
 # CHANGELOG
 
-## v2.0.0
+## v2.0.1
 
+- Update module version
 - Update dependecies
 - Update codesystem
 - Update linter

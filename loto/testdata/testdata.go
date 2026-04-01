@@ -3,7 +3,7 @@ package testdata
 import (
 	"testing"
 
-	"github.com/winning-number/fdj-sdk/loto/csv"
+	"github.com/winning-number/fdj-sdk/v2/loto/csv"
 )
 
 const (
