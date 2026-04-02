@@ -1,12 +1,5 @@
 # CHANGELOG
 
-## v2.0.1
+## v2.0.2
 
-- Update module version
-- Update dependecies
-- Update codesystem
-- Update linter
-- Change interface to allow other fdj's game integration
-- Remove security issues
-- Update tests
-- Rename repository in fdj-sdk
+- Update LotteryDraw converter to normalize the winning codes.
