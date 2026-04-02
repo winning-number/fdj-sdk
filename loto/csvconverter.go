@@ -386,7 +386,7 @@ func convertCSVVersion3(lottoType LottoType, obj *csv.Version3) (*LotteryDraw, e
 			NumRanks: NumRankInVersion3,
 		},
 		WinningCode: WinningCode{
-			Codes:    strings.Split(obj.WinCodes, csv.WinCodeSeparator),
+			Codes:    normalizeCodes(obj.WinCodes),
 			Price:    float64(obj.GainCode),
 			NumCodes: int(obj.NumberWinCodes),
 		},
@@ -512,7 +512,7 @@ func convertCSVVersion4(lottoType LottoType, obj *csv.Version4) (*LotteryDraw, e
 			NumRanks: NumRankInVersion4SecondDraw,
 		},
 		WinningCode: WinningCode{
-			Codes:    strings.Split(obj.WinCodes, csv.WinCodeSeparator),
+			Codes:    normalizeCodes(obj.WinCodes),
 			Price:    float64(obj.GainCode),
 			NumCodes: int(obj.NumberWinCodes),
 		},
@@ -645,4 +645,16 @@ func currencyConverter(currency string) (model.Currency, error) {
 	default:
 		return "", fmt.Errorf("%s: %w", currency, ErrUnknownCurrency)
 	}
+}
+
+// normalizeCodes transform the input string in list of code.
+// It format them to remove leading and trailing space char.
+func normalizeCodes(input string) []string {
+	codes := strings.Split(input, csv.WinCodeSeparator)
+
+	for i, code := range codes {
+		codes[i] = strings.Trim(code, " ")
+	}
+
+	return codes
 }
