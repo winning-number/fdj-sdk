@@ -20,3 +20,4 @@ jobs:
       with:
         type: 'lib'
         context: '.'
+        ignored-files: '${{ vars.CODESYSTEM_IGNORED_FILES }}'

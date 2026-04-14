@@ -16,6 +16,8 @@ This package is a fdj's sdk (FRANCAISE DES JEUX). It could get the full game's h
 
 [Loto history csv files](https://www.fdj.fr/jeux-de-tirage/loto/historique).
 
+> **Disclaimer:** This SDK uses FDJ's public-facing API endpoints (e.g. `sto.api.fdj.fr`). These endpoints are not officially documented or supported for third-party use. They may change or become unavailable without notice. This project is not affiliated with, endorsed by, or in any way officially connected to the Française des Jeux (FDJ). Use at your own risk and ensure your usage complies with FDJ's terms of service.
+
 ## Installation
 
 Download fdj-sdk:
@@ -142,6 +144,68 @@ From the begin of the lotto, the rules are been updated any time. So, to exploit
 * Add `Winning number` (any by draw depends of type of draw).
 * Add a `Second Roll` with `5` balls between `1` and `49` included (no lucky ball). Result is providing in only in a number order.
 * `4` Winners Rank for the second Roll
+
+## Draw Info Endpoint: `service-draw-info/v3/draws`
+
+This endpoint provides **draw metadata** — not winning numbers. It is used to retrieve current and upcoming draw information for any FDJ game.
+
+**Base URL:** `https://www.sto.api.fdj.fr/anonymous/service-draw-info/v3/draws`
+
+### Query Parameters
+
+| Parameter | Values | Description |
+| --- | --- | --- |
+| `game_name` | `fdj.Game` | Game identifier |
+| `sort` | `fdj.Sort` | Sort order (ASC - DESC) |
+| `current` | `bool` | `true` = current open draw |
+| `from_planned_at` | `ISO date` or `now` | Filter draws starting from |
+| `to_planned_at` | `ISO date` | Filter draws up to |
+| `page_number` | `int` | Pagination (page-size: 20) |
+
+**`current=true` + `game=loto` returns the current loto draw.**
+**`current=false` + `game=loto` + `from_planned_at=now` returns the next loto draw(s) after the current.**
+**`current=false` + `game=loto` + `to_planned_at=now` returns the prev loto draw(s) before the current.**
+
+### Response Fields
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | FDJ internal draw ID |
+| `external_id` | string | Official draw number (e.g. `26042`) |
+| `game_external_id` | `fdj.GameExternalID` | Game identifier (e.g. `draw-13` = Loto) |
+| `game_version` | int | Rules version (`0` = current) |
+| `cdc` | int | Internal prize grid identifier |
+| `type` | *string | Draw type: `"1"` = classic, `"2"` = exceptional, `"9"` = super mega jackpot. **Optional** — absent on some draws |
+| `is_current` | bool | `true` = next draw open for bets |
+| `planned_at` | datetime | Scheduled draw date/time |
+| `wagering_ends_at` | datetime | Betting deadline |
+| `forcloses_at` | datetime | Prize claim deadline (~90 days) |
+| `processed_at` | *datetime | Processing timestamp. **Absent = future draw** |
+| `cycle_number` | *string | Draw number within the current jackpot cycle |
+| `rolldown` | bool | Jackpot redistributed to lower rank |
+| `flowdown` | *bool | Jackpot cascade redistribution variant |
+| `theme_id` | string | Visual theme (`"0"` = standard) |
+| `guaranteed_amounts` | []Amount | Guaranteed minimum jackpot (EUR + XPF) |
+| `guaranteed_raffle_prizes` | []RafflePrize | Raffle: winners count and amount per winner |
+| `videos` | []Video | YouTube draw video (past draws only) |
+
+#### Amount Decoding
+
+Monetary values use a `value` + `scale` encoding:
+
+```text
+real_amount = value / 10^scale
+```
+
+Examples:
+
+* `value=1_300_000_000, scale=2` → **13 000 000 €** (13M)
+* `value=2_000_000, scale=2` → **20 000 €**
+* XPF uses `scale=0` (no decimals — French Polynesia currency)
+
+In Go: `amount := float64(value) / math.Pow10(scale)`
+
+> **Note on datetime parsing:** the format `2026-04-11T20:15:00.000+02:00` is not parsed natively by `time.RFC3339` in Go (milliseconds + offset). Use `time.Parse("2006-01-02T15:04:05.000-07:00", ...)` or a custom type.
 
 ## Contributing
 

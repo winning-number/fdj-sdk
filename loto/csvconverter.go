@@ -4,7 +4,6 @@ package loto
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -528,7 +527,7 @@ func convertCSVVersion4(lottoType LottoType, obj *csv.Version4) (*LotteryDraw, e
 //
 //	FDJID: is the official ID from the fdj API represented by the year and the draw number. It's not necessary uniq.
 //	ID: is a composition reproducible to detect if draw match and
-//		is composed by FDJID + draw number and the result number in ascendant order.
+//		is composed by FDJID + draw number of month + month str.
 //	Date: is a draw date.
 //	ForclosureDate: is the forclosure date, if empty, the date is set to the draw date + 2 days.
 //	Version: represent the origin version of the lotto.
@@ -562,13 +561,11 @@ func convertMetadata(obj *csv.Common, params metadataParameter) (Metadata, error
 	}
 
 	return Metadata{
-		FDJID: obj.ID,
-		ID: fmt.Sprintf(
-			"%s-%s-%s",
+		FDJID: fmt.Sprintf("%s-%d-%d-%s",
 			obj.ID,
-			strconv.Itoa(int(params.tirageOrder)),
-			params.winOrder,
-		),
+			int(params.tirageOrder),
+			drawDate.Day(),
+			drawDate.Month().String()),
 		Date:           drawDate,
 		ForclosureDate: forclosureDate,
 		Version:        params.version,

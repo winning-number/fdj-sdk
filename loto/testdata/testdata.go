@@ -29,6 +29,11 @@ const (
 	ValidNumberWinCode  = 3
 )
 
+const (
+	IDTirage1 = "fdj-identifier-1-2-January"
+	IDTirage2 = "fdj-identifier-2-2-January"
+)
+
 func CopyCommon(t *testing.T, obj any, common csv.Common) {
 	t.Helper()
 
