@@ -97,7 +97,6 @@ type LottoType string
 // Metadata represents the metadata of a LotteryDraw.
 type Metadata struct {
 	FDJID          string
-	ID             string
 	Date           time.Time
 	ForclosureDate time.Time
 	Version        LotteryVersion

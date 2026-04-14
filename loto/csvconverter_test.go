@@ -1,7 +1,6 @@
 package loto
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -16,8 +15,7 @@ func ExpectedMetadata(t *testing.T, change *Metadata, isOld bool) Metadata {
 	t.Helper()
 
 	data := Metadata{
-		FDJID:          testdata.ValidFDJIdentifier,
-		ID:             fmt.Sprintf("%s-1-", testdata.ValidFDJIdentifier),
+		FDJID:          testdata.IDTirage1,
 		Date:           time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 		ForclosureDate: time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 		Version:        LotteryV0,
@@ -34,9 +32,6 @@ func ExpectedMetadata(t *testing.T, change *Metadata, isOld bool) Metadata {
 
 	if change.FDJID != "" {
 		data.FDJID = change.FDJID
-	}
-	if change.ID != "" {
-		data.ID = change.ID
 	}
 	if !change.Date.IsZero() {
 		data.Date = change.Date
@@ -535,8 +530,7 @@ func TestCSVConverter(t *testing.T) {
 
 		assert.Equal(t, &LotteryDraw{
 			Metadata: Metadata{
-				FDJID:          testdata.ValidFDJIdentifier,
-				ID:             fmt.Sprintf("%s-1-%s", testdata.ValidFDJIdentifier, testdata.ValidWinOrder),
+				FDJID:          testdata.IDTirage1,
 				Date:           time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				ForclosureDate: time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				Version:        LotteryV0,
@@ -601,11 +595,7 @@ func TestCSVConverter(t *testing.T) {
 
 		assert.Equal(t, &LotteryDraw{
 			Metadata: Metadata{
-				FDJID: testdata.ValidFDJIdentifier,
-				ID: fmt.Sprintf("%s-%d-%s",
-					testdata.ValidFDJIdentifier,
-					testdata.ValidTirageOrder,
-					testdata.ValidWinOrder),
+				FDJID:          testdata.IDTirage2,
 				Date:           time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				ForclosureDate: time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				Version:        LotteryV1,
@@ -671,10 +661,7 @@ func TestCSVConverter(t *testing.T) {
 
 		assert.Equal(t, &LotteryDraw{
 			Metadata: Metadata{
-				FDJID: testdata.ValidFDJIdentifier,
-				ID: fmt.Sprintf("%s-1-%s",
-					testdata.ValidFDJIdentifier,
-					testdata.ValidWinOrder),
+				FDJID:          testdata.IDTirage1,
 				Date:           time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				ForclosureDate: time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				Version:        LotteryV2,
@@ -734,10 +721,7 @@ func TestCSVConverter(t *testing.T) {
 
 		assert.Equal(t, &LotteryDraw{
 			Metadata: Metadata{
-				FDJID: testdata.ValidFDJIdentifier,
-				ID: fmt.Sprintf("%s-1-%s",
-					testdata.ValidFDJIdentifier,
-					testdata.ValidWinOrder),
+				FDJID:          testdata.IDTirage1,
 				Date:           time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				ForclosureDate: time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				Version:        LotteryV3,
@@ -818,10 +802,7 @@ func TestCSVConverter(t *testing.T) {
 
 		assert.Equal(t, &LotteryDraw{
 			Metadata: Metadata{
-				FDJID: testdata.ValidFDJIdentifier,
-				ID: fmt.Sprintf("%s-1-%s",
-					testdata.ValidFDJIdentifier,
-					testdata.ValidWinOrder),
+				FDJID:          testdata.IDTirage1,
 				Date:           time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				ForclosureDate: time.Date(2006, 1, 2, 0, 0, 0, 0, time.UTC),
 				Version:        LotteryV4,
