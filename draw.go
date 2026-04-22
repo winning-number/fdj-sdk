@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	xhttp "github.com/gofast-pkg/http"
@@ -223,8 +224,12 @@ func (a *api) drawsDo(ctx context.Context, filter *DrawFilter) (*http.Response, 
 
 func setDrawsURLParam(req *http.Request, filter *DrawFilter) {
 	values := req.URL.Query()
-	for _, g := range filter.Games {
-		values.Add(drawHeaderGameName, string(g))
+	if len(filter.Games) > 0 {
+		games := make([]string, len(filter.Games))
+		for i, g := range filter.Games {
+			games[i] = string(g)
+		}
+		values.Set(drawHeaderGameName, strings.Join(games, ","))
 	}
 	if filter.CurrentIsSet {
 		values.Set(drawHeaderCurrent, fmt.Sprintf("%t", filter.Current))

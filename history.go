@@ -19,7 +19,7 @@ const (
 
 	headerContentDisposition = "content-disposition"
 	headerContentLength      = "content-length"
-	headerDateReceived       = "date-received"
+	headerDateReceived       = "date"
 	headerFileName           = "filename"
 )
 
@@ -135,12 +135,13 @@ func buildMetadata(header http.Header, identifier string) (source.Metadata, erro
 	if dateReceived == "" {
 		return source.Metadata{}, fmt.Errorf("%s: %w", headerDateReceived, ErrHistoryMissingHeader)
 	}
-	ret.RequestedAt, err = time.Parse(time.RFC3339Nano, dateReceived)
+	ret.RequestedAt, err = time.Parse(time.RFC1123, dateReceived)
 	if err != nil {
 		return source.Metadata{}, errors.Join(
 			err,
 			fmt.Errorf("%s: %w", headerDateReceived, ErrHistoryInvalidHeader))
 	}
+	ret.RequestedAt = ret.RequestedAt.UTC()
 
 	return ret, nil
 }
