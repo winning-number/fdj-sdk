@@ -1,6 +1,5 @@
 # CHANGELOG
 
-## v2.2.0
+## v2.3.0
 
-- Fix FDJ's api time format
-- Fix FDJ's api game enum format
+- Rename numero_jockerplu to numero_7 in loto v4

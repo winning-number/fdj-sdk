@@ -4,10 +4,11 @@ package csv
 // as we know it toaday.
 // It add win codes and integrate a second draw without lucky ball.
 // The new field 'promotion_second_tirage' is already empty and so never used.
+// numero_jockerplus was rename to numero_7.
 type Version4 struct {
 	Common
 
-	JokerPlus string      `csv:"numero_jokerplus"`
+	JokerPlus string      `csv:"numero_7"`
 	GainCode  FrenchFloat `csv:"rapport_codes_gagnants"`
 	WinCodes  string      `csv:"codes_gagnants"`
 	//nolint:misspell // This field is named like this in the CSV file.
