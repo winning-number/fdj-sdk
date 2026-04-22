@@ -22,7 +22,7 @@ const (
 	invalidHeaderValue      = "invalid-value"
 	contentDispositionValue = "attachment; filename=file.zip;"
 	contentSizeValue        = "1024"
-	dateReceiveValue        = "2026-04-01T07:40:44.514496Z"
+	dateReceiveValue        = "Wed, 01 Apr 2026 07:40:44 GMT"
 	filename                = "file.zip"
 )
 
@@ -254,7 +254,7 @@ func TestAPI_DownloadHistory(t *testing.T) {
 		expected := source.Metadata{
 			Identifier:  string(loto.Loto201911UUID),
 			Size:        1024,
-			RequestedAt: time.Date(2026, time.April, 1, 7, 40, 44, 514496000, time.UTC),
+			RequestedAt: time.Date(2026, time.April, 1, 7, 40, 44, 0, time.UTC),
 			FileName:    filename,
 		}
 
@@ -456,7 +456,7 @@ func TestAPI_HistoryMetadata(t *testing.T) {
 		expected := source.Metadata{
 			Identifier:  string(loto.Loto201911UUID),
 			Size:        1024,
-			RequestedAt: time.Date(2026, time.April, 1, 7, 40, 44, 514496000, time.UTC),
+			RequestedAt: time.Date(2026, time.April, 1, 7, 40, 44, 0, time.UTC),
 			FileName:    filename,
 		}
 
